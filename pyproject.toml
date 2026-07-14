@@ -1,0 +1,61 @@
+[project]
+name = "akta-cli"
+description = "Command-line client for the Akta API (api.akta.pro)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Wokelo AI", email = "engineering@wokelo.ai" }]
+keywords = ["akta", "cli", "company-intelligence", "market-intelligence"]
+classifiers = [
+    # Guards against accidental upload to the public PyPI.
+    "Private :: Do Not Upload",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "httpx>=0.27",
+    "typer>=0.12",
+    "rich>=13",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "respx>=0.22",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Repository = "https://github.com/Wokelo-AI/Akta-CLI"
+
+[project.scripts]
+akta = "akta_cli.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "akta_cli.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "E501",   # line length — long help strings; left to the formatter
+    "UP042",  # keep explicit `str, Enum` (avoids StrEnum's str() behaviour change)
+]

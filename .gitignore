@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+
+# Virtualenvs
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local credentials / secrets (never commit)
+.env
+credentials.json
+
+# Agent/editor local context
+CLAUDE.md
+.idea/
+.vscode/
+.DS_Store

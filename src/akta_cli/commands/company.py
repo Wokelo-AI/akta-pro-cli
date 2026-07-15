@@ -123,15 +123,32 @@ def data(
         "/company/enrichment/markdown",
         {"company": company, "sections": ",".join(requested)},
     )
-    # The endpoint returns Markdown text, or a JSON envelope with `data` = markdown.
-    if isinstance(result, dict):
-        result = result.get("data", result)
-    if skipped and isinstance(result, str):
-        result = (
+    # The endpoint returns a JSON envelope {data: markdown, sections_included,
+    # credits_consumed, …}, or (fallback) raw Markdown text. Unwrap to the body,
+    # then append credits + sections as an in-body footer (mirrors the MCP's
+    # company_data) so the info survives rendering, --raw, piping, and -o.
+    envelope = result if isinstance(result, dict) else {}
+    markdown = envelope.get("data", result) if envelope else result
+    if not isinstance(markdown, str):
+        markdown = str(markdown)
+
+    if skipped:
+        markdown = (
             f"> _Skipped enterprise-only section(s): {', '.join(skipped)} — "
-            "not in your plan._\n\n" + result
+            "not in your plan._\n\n" + markdown
         )
-    emit(ctx.obj, result, json_out=raw, output=output, markdown=True)
+
+    footer_parts: list[str] = []
+    included = envelope.get("sections_included")
+    if included:
+        footer_parts.append(f"Sections included: {', '.join(included)}")
+    credits = envelope.get("credits_consumed")
+    if credits is not None:
+        footer_parts.append(f"Credits consumed: {credits}")
+    if footer_parts:
+        markdown = f"{markdown.rstrip()}\n\n---\n_{' · '.join(footer_parts)}_\n"
+
+    emit(ctx.obj, markdown, json_out=raw, output=output, markdown=True)
 
 
 @app.command("concise")

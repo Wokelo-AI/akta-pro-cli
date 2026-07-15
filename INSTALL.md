@@ -23,7 +23,7 @@ Pick one method.
 ### A. From the tagged release via pipx (recommended)
 
 ```bash
-pipx install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.0"
+pipx install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.1"
 ```
 
 Because the repo is private, git needs GitHub credentials. Easiest options:
@@ -35,18 +35,18 @@ If you can't set up git auth, use method B instead.
 
 ### B. From the downloaded wheel (no git auth needed)
 
-1. Open <https://github.com/Wokelo-AI/Akta-CLI/releases/tag/v0.2.0>
-2. Download `akta_cli-0.1.0-py3-none-any.whl` from the **Assets**.
+1. Open <https://github.com/Wokelo-AI/Akta-CLI/releases/tag/v0.2.1>
+2. Download `akta_cli-0.2.1-py3-none-any.whl` from the **Assets**.
 3. Install it:
    ```bash
-   pipx install ./akta_cli-0.1.0-py3-none-any.whl
+   pipx install ./akta_cli-0.2.1-py3-none-any.whl
    ```
 
 ### C. Plain pip into a virtualenv (if you don't use pipx)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.0"
+pip install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.1"
 ```
 
 ## Authenticate
@@ -94,7 +94,7 @@ akta company search "Canva"    # free
 Reinstall the version you want with `--force`:
 
 ```bash
-pipx install --force "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.0"
+pipx install --force "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.1"
 ```
 
 > Note: `pipx upgrade akta-cli` is a **no-op** for a tag-pinned install — always

@@ -13,7 +13,7 @@ Distributed via tagged **GitHub Releases**. Quickest path (needs read access to
 the private repo):
 
 ```bash
-pipx install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.0"
+pipx install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.1"
 ```
 
 Or download the wheel from the [latest release](https://github.com/Wokelo-AI/Akta-CLI/releases)

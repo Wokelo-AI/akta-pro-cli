@@ -6,7 +6,10 @@ from enum import Enum
 from typing import Annotated
 
 import typer
+from rich.console import Group
+from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
 from akta_cli.console import err
 from akta_cli.news_tags import NEWS_CATEGORIES, NEWS_TAGS
@@ -16,7 +19,7 @@ from akta_cli.runtime import EXIT_BAD_INPUT, emit, fetch
 app = typer.Typer(no_args_is_help=True, help="News signals, article detail, and the type taxonomy.")
 
 # Compact list fields (mirrors the MCP's news_signals shaping); `id` feeds `detail`.
-_STRIPPED_FIELDS = ("id", "title", "published_date", "publisher", "sentiment", "ai_summary", "url")
+_STRIPPED_FIELDS = ("id", "title", "ai_summary", "url", "published_date", "publisher")
 
 
 class Sentiment(str, Enum):
@@ -44,15 +47,16 @@ def _signals_table(result: object) -> Table | None:
     if not rows:
         return None
     table = Table(title=f"News ({result.get('count', '?')} of {result.get('total', '?')})")
-    for col in ("Id", "Date", "Publisher", "Sentiment", "Title"):
+    for col in ("Id", "Date", "Publisher", "Title", "AI summary", "URL"):
         table.add_column(col, overflow="fold")
     for row in rows:
         table.add_row(
             str(row.get("id", "") or ""),
             str(row.get("published_date", "") or ""),
             str(row.get("publisher", "") or ""),
-            str(row.get("sentiment", "") or ""),
             str(row.get("title", "") or ""),
+            str(row.get("ai_summary", "") or ""),
+            str(row.get("url", "") or ""),
         )
     return table
 
@@ -113,6 +117,44 @@ def signals(
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_signals_table)
 
 
+def _detail_view(result: object) -> Group | None:
+    """Readable reader view for `news detail`: title + meta + article body.
+
+    Puts `full_text` front and centre (the whole point of `detail`); when the
+    body is empty, falls back to the AI summary and points at the source URL so
+    the output is still useful. Use --json for the full enrichment payload.
+    """
+    rows = result.get("data") if isinstance(result, dict) else None
+    if not rows:
+        return None
+    panels = []
+    for a in rows:
+        meta_bits = [str(a.get(k)) for k in ("publisher", "published_date") if a.get(k)]
+        meta = "  ·  ".join(meta_bits)
+        url = a.get("url") or ""
+        body = (a.get("full_text") or "").strip()
+        if body:
+            content = Text(body)
+        else:
+            summary = (a.get("ai_summary") or "").strip()
+            content = Text()
+            content.append("Full article text is unavailable for this article.\n", style="yellow")
+            if summary:
+                content.append("\nAI summary:\n", style="bold")
+                content.append(summary + "\n")
+            if url:
+                content.append("\nRead the source: ", style="dim")
+                content.append(url, style="cyan underline")
+        header = Text(str(a.get("title") or f"#{a.get('id')}"), style="bold")
+        if meta:
+            header.append(f"\n{meta}", style="dim")
+        if body and url:
+            header.append(f"\n{url}", style="cyan")
+        panels.append(Panel(content, title=header, title_align="left",
+                            subtitle=f"id {a.get('id')}", subtitle_align="right"))
+    return Group(*panels)
+
+
 @app.command("detail")
 def detail(
     ctx: typer.Context,
@@ -120,13 +162,18 @@ def detail(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Fetch full article bodies for specific news id(s). Cost: 0.1/call + 0.01/article."""
+    """Fetch full article bodies for specific news id(s). Cost: 0.1/call + 0.01/article.
+
+    In a terminal this renders a readable reader view — the article `full_text`
+    up top, falling back to the AI summary + source URL when a body isn't
+    available. Pass --json for the complete enrichment payload.
+    """
     if not news_ids:
         err.print("[red]Provide at least one news id[/] (from `akta news signals`).")
         raise typer.Exit(code=EXIT_BAD_INPUT)
     ids_csv = ",".join(str(i) for i in news_ids[:10])
     result = fetch(ctx.obj, "/news/by-id/", {"news_ids": ids_csv})
-    emit(ctx.obj, result, json_out=json_out, output=output)
+    emit(ctx.obj, result, json_out=json_out, output=output, renderer=_detail_view)
 
 
 def _types_table(_: object) -> Table:

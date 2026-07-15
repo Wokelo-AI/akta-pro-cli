@@ -3,7 +3,24 @@
 All notable changes to the Akta CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
-## [0.2.0] - unreleased
+## [0.2.1]
+
+### Changed
+- `company data` now appends **credits consumed** (and the sections included) as
+  an in-body Markdown footer, mirroring the MCP's `company_data`. Previously the
+  credit count was dropped entirely for this command — it now survives rendering,
+  `--raw`, piping, and `-o` to a file.
+- The default `news signals` compact view now returns **id, title, ai_summary,
+  url, published_date, publisher** (dropped `sentiment`). The TTY table shows
+  Title, AI summary, and URL. Use `--full` for sentiment and the full per-article
+  metadata. (Mirrors the same change in the MCP's `news_signals`.)
+
+### Added
+- `news detail` renders a readable **reader view** in a terminal — the article
+  `full_text` up top, falling back to the AI summary and source URL when a body
+  isn't available. `--json` still returns the complete enrichment payload.
+
+## [0.2.0]
 
 ### Added
 - `akta update` — checks for a newer release (via the repo's git tags, so it

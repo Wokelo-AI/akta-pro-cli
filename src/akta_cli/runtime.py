@@ -123,7 +123,9 @@ def emit(
     renderer: Callable[[Any], Any] | None = None,
     markdown: bool = False,
 ) -> None:
-    # 1. credits → stderr
+    # 1. credits → stderr (for dict/JSON results). `company data` returns a
+    # Markdown string with credits already appended as an in-body footer, so it
+    # deliberately doesn't hit this branch — see commands/company.py.
     if isinstance(result, dict) and not ctx.quiet:
         credits = result.get("credits_consumed")
         if credits is not None:

@@ -116,6 +116,34 @@ def test_news_detail_fetches_bodies():
     assert route.calls.last.request.url.params.get("news_ids") == "7,8"
 
 
+def _render(renderable) -> str:
+    import io
+
+    from rich.console import Console
+    buf = io.StringIO()
+    Console(file=buf, width=200, force_terminal=False).print(renderable)
+    return buf.getvalue()
+
+
+def test_news_detail_reader_shows_body():
+    from akta_cli.commands.news import _detail_view
+    view = _detail_view({"data": [{"id": 7, "title": "T", "publisher": "Reuters",
+                                   "full_text": "THE FULL ARTICLE BODY.", "url": "http://x"}]})
+    text = _render(view)
+    assert "THE FULL ARTICLE BODY." in text
+    assert "Reuters" in text
+
+
+def test_news_detail_reader_falls_back_when_body_empty():
+    from akta_cli.commands.news import _detail_view
+    view = _detail_view({"data": [{"id": 7, "title": "T", "full_text": "",
+                                   "ai_summary": "SHORT SUMMARY", "url": "http://src"}]})
+    text = _render(view)
+    assert "unavailable" in text.lower()
+    assert "SHORT SUMMARY" in text     # falls back to the AI summary
+    assert "http://src" in text        # ...and points at the source
+
+
 def test_news_types_offline_no_key():
     # Free + offline: no key needed, no network hit.
     res = runner.invoke(app, ["news", "types", "--json"])
@@ -152,6 +180,39 @@ def test_markdown_passthrough_with_raw():
                               "-s", "firmographic", "--raw"])
     assert res.exit_code == 0
     assert res.stdout.strip().startswith("# Canva")
+
+
+@respx.mock
+def test_company_data_envelope_appends_credits_footer():
+    # Real server shape: a JSON envelope {data: markdown, sections_included,
+    # credits_consumed, …}. `company data` unwraps `data` and appends an in-body
+    # footer with credits + sections (mirrors the MCP) so it survives --raw, -o,
+    # and piping. Regression for credits going missing on `company data`.
+    respx.get(f"{BASE}/company/enrichment/markdown").mock(
+        return_value=httpx.Response(200, json={
+            "data": "# Canva\n\nDesign platform.",
+            "uuid": "abc-123",
+            "sections_included": ["firmographic"],
+            "credits_consumed": 2.0,
+        }))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
+                              "-s", "firmographic", "--raw"])
+    assert res.exit_code == 0
+    assert res.stdout.strip().startswith("# Canva")  # markdown body unwrapped
+    assert '"data"' not in res.stdout                # envelope itself never printed
+    assert "Credits consumed: 2.0" in res.stdout     # in the Markdown, not stderr
+    assert "Sections included: firmographic" in res.stdout
+
+
+@respx.mock
+def test_company_data_footer_survives_output_file(tmp_path):
+    respx.get(f"{BASE}/company/enrichment/markdown").mock(
+        return_value=httpx.Response(200, json={"data": "# Canva", "credits_consumed": 2.0}))
+    dest = tmp_path / "canva.md"
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
+                              "-s", "firmographic", "-o", str(dest)])
+    assert res.exit_code == 0
+    assert "Credits consumed: 2.0" in dest.read_text()  # persisted to the file
 
 
 @respx.mock

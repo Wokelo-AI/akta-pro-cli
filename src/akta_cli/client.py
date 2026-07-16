@@ -11,7 +11,13 @@ from __future__ import annotations
 
 import httpx
 
+from . import __version__
+
 DEFAULT_BASE_URL = "https://api.akta.pro/api/v1"
+
+# Sent on every request so the backend can distinguish (and version-track) CLI
+# traffic. Mirrors the MCP's `X-Client-Source: AKTA-MCP`.
+CLIENT_SOURCE = f"AKTA-CLI/{__version__}"
 
 
 class AktaAPIError(RuntimeError):
@@ -69,7 +75,7 @@ class AktaClient:
         self._http = httpx.Client(base_url=base_url, timeout=timeout, follow_redirects=True)
 
     def _headers(self) -> dict:
-        return {"x-api-key": self._api_key, "X-Client-Source": "AKTA-CLI"}
+        return {"x-api-key": self._api_key, "X-Client-Source": CLIENT_SOURCE}
 
     def get(self, path: str, params: dict | None = None):
         """GET, returning parsed JSON when the response is JSON, else raw text.

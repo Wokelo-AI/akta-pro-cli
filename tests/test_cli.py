@@ -56,7 +56,7 @@ def test_search_sends_headers_and_query():
     assert '"uuid": "abc-123"' in res.stdout
     req = route.calls.last.request
     assert req.headers.get("x-api-key") == "wk_dummy"
-    assert req.headers.get("x-client-source") == "AKTA-CLI"
+    assert req.headers.get("x-client-source", "").startswith("AKTA-CLI/")
     assert req.url.params.get("query") == "Canva"
 
 

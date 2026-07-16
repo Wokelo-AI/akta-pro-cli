@@ -84,10 +84,21 @@ def data(
         list[Section] | None,
         typer.Option("-s", "--section", help="Section(s) to fetch (repeatable). Required — there is no 'all'."),
     ] = None,
-    raw: Annotated[bool, typer.Option("--json", "--raw", help="Emit raw Markdown instead of rendering it.")] = False,
+    markdown: Annotated[
+        bool,
+        typer.Option("-m", "--markdown", help="Return server-rendered Markdown instead of the default JSON."),
+    ] = False,
+    raw: Annotated[
+        bool,
+        typer.Option("--raw", "--json", help="Emit the raw payload unrendered (raw Markdown with --markdown, else plain JSON)."),
+    ] = False,
     output: OutOpt = None,
 ) -> None:
-    """Enrich a company with the chosen sections, returned as Markdown.
+    """Enrich a company with the chosen sections.
+
+    Returns structured JSON by default (from `/company/enrichment`); pass
+    `--markdown` for the server-rendered Markdown variant
+    (`/company/enrichment/markdown`). Both build — and bill — identical sections.
 
     Credits per section: firmographic 2, business_model 2, company_assessment 2,
     trust_signal 0.5, company_hierarchy 0.5, digital_presence 0.5,
@@ -118,24 +129,34 @@ def data(
         )
         raise typer.Exit(code=EXIT_BAD_INPUT)
 
-    result = fetch(
-        ctx.obj,
-        "/company/enrichment/markdown",
-        {"company": company, "sections": ",".join(requested)},
-    )
-    # The endpoint returns a JSON envelope {data: markdown, sections_included,
-    # credits_consumed, …}, or (fallback) raw Markdown text. Unwrap to the body,
-    # then append credits + sections as an in-body footer (mirrors the MCP's
-    # company_data) so the info survives rendering, --raw, piping, and -o.
+    params = {"company": company, "sections": ",".join(requested)}
+
+    # Default: structured JSON from /company/enrichment. Both endpoints bill the
+    # same sections; only the shape differs (JSON object vs server-rendered MD).
+    if not markdown:
+        result = fetch(ctx.obj, "/company/enrichment", params)
+        if skipped and not ctx.obj.quiet:
+            err.print(
+                f"[yellow]Skipped enterprise-only section(s): {', '.join(skipped)} — "
+                "not in your plan.[/]"
+            )
+        emit(ctx.obj, result, json_out=raw, output=output)
+        return
+
+    result = fetch(ctx.obj, "/company/enrichment/markdown", params)
+    # The Markdown endpoint returns a JSON envelope {data: markdown,
+    # sections_included, credits_consumed, …}, or (fallback) raw Markdown text.
+    # Unwrap to the body, then append credits + sections as an in-body footer
+    # so the info survives rendering, --raw, piping, and -o.
     envelope = result if isinstance(result, dict) else {}
-    markdown = envelope.get("data", result) if envelope else result
-    if not isinstance(markdown, str):
-        markdown = str(markdown)
+    body = envelope.get("data", result) if envelope else result
+    if not isinstance(body, str):
+        body = str(body)
 
     if skipped:
-        markdown = (
+        body = (
             f"> _Skipped enterprise-only section(s): {', '.join(skipped)} — "
-            "not in your plan._\n\n" + markdown
+            "not in your plan._\n\n" + body
         )
 
     footer_parts: list[str] = []
@@ -146,9 +167,9 @@ def data(
     if credits is not None:
         footer_parts.append(f"Credits consumed: {credits}")
     if footer_parts:
-        markdown = f"{markdown.rstrip()}\n\n---\n_{' · '.join(footer_parts)}_\n"
+        body = f"{body.rstrip()}\n\n---\n_{' · '.join(footer_parts)}_\n"
 
-    emit(ctx.obj, markdown, json_out=raw, output=output, markdown=True)
+    emit(ctx.obj, body, json_out=raw, output=output, markdown=True)
 
 
 @app.command("concise")

@@ -3,6 +3,24 @@
 All notable changes to the Akta CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.2.3]
+
+### Changed
+- `company data` now returns **structured JSON** from `/company/enrichment` by
+  default; pass `-m`/`--markdown` for the server-rendered Markdown variant
+  (`/company/enrichment/markdown`). Both build — and bill — identical sections.
+- Review limits are capped to match the API: `reviews employees --limit` max
+  **100**, `reviews products --limit` max **50** per product.
+
+### Added
+- `news signals` gains richer filters (all optional, repeatable): `--country`,
+  `--blacklist`, `--entity-person/-location/-product/-event`, and
+  `--naics/--sic/--iptc/--iab` classification codes.
+
+### Removed
+- `news signals` no longer **requires** an anchor — `--company/--industry/
+  --query/--title` are all optional now.
+
 ## [0.2.2]
 
 ### Changed

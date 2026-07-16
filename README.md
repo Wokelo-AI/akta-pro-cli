@@ -71,18 +71,18 @@ effect.
 |---|---|---|---|
 | `akta account` | `/mcp/account` | free | your tier + credit balance |
 | `akta company search <query>` | `/company/search` | free | run first; returns `uuid` |
-| `akta company data <company> -s ...` | `/company/enrichment/markdown` | per section | Markdown; requires ≥1 `--section` |
+| `akta company data <company> -s ...` | `/company/enrichment` (JSON; `--markdown` → `/company/enrichment/markdown`) | per section | requires ≥1 `--section` |
 | `akta company concise <company>` | `/company/enrichment/concise` | 8 | slimmed JSON |
 | `akta industry search <query>` | `/industry/search` | free | codes feed `news signals --industry` |
-| `akta news signals [filters]` | `/news` | 0.1 + 0.01/article | needs ≥1 of `--company/--industry/--query/--title`; compact list with `id`s |
+| `akta news signals [filters]` | `/news` | 0.1 + 0.01/article | anchor with `--company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); compact list with `id`s |
 | `akta news detail <id>...` | `/news/by-id/` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
 | `akta news types` | none (embedded) | free | tag codes for `--type-code`; offline, no key |
 | `akta headcount <company>` | `/company/headcount-trends` | 2.5 | Subscription/Enterprise |
 | `akta traffic <company>` | `/company/website-traffic` | 1.5 | Subscription/Enterprise |
 | `akta jobs <company>` | `/company/jobs` | 3 | Subscription/Enterprise |
 | `akta posts <company>` | `/company/posts` | 1.5 | Subscription/Enterprise |
-| `akta reviews employees <company>` | `/company/employee-reviews` | 1.5/50 | Subscription/Enterprise |
-| `akta reviews products <company>` | `/company/product-reviews` | 1.5/50 | catalog first, then `--product-id` |
+| `akta reviews employees <company>` | `/company/employee-reviews` | 1.5/50 | Subscription/Enterprise; `-n/--limit` max 100 |
+| `akta reviews products <company>` | `/company/product-reviews` | 1.5/50 | catalog first, then `--product-id`; `-n/--limit` max 50 per product |
 
 `company data` sections (each billed separately): `firmographic`,
 `business_model`, `company_assessment`, `trust_signal`, `company_hierarchy`,

@@ -42,6 +42,14 @@ def _shape(article: dict, *, full: bool) -> dict:
     return {k: article.get(k) for k in _STRIPPED_FIELDS}
 
 
+def _csv(values: list[str] | None) -> str | None:
+    """Join repeatable-option values into the comma-separated string the API
+    expects (or None when nothing was passed)."""
+    if not values:
+        return None
+    return ",".join(v.strip() for v in values if v.strip()) or None
+
+
 def _signals_table(result: object) -> Table | None:
     rows = result.get("data") if isinstance(result, dict) else None
     if not rows:
@@ -73,6 +81,16 @@ def signals(
     type_codes: Annotated[list[str] | None, typer.Option("--type-code", "-t", help="News-type tag code(s) from `akta news types`, e.g. SD01, CM03 (repeatable).")] = None,
     sentiment: Annotated[Sentiment, typer.Option("--sentiment", help="Filter by article sentiment.")] = Sentiment.all,
     news_score: Annotated[NewsScore, typer.Option("--news-score", help="Filter by relevance/quality tier.")] = NewsScore.all,
+    countries: Annotated[list[str] | None, typer.Option("--country", help="Filter by the event's country — ISO codes, e.g. USA, GBR (repeatable).")] = None,
+    blacklisted: Annotated[list[str] | None, typer.Option("--blacklist", help="Publisher domain(s) to exclude, e.g. example.com (repeatable).")] = None,
+    entity_person: Annotated[list[str] | None, typer.Option("--entity-person", help="Only articles mentioning these people, by name (repeatable).")] = None,
+    entity_location: Annotated[list[str] | None, typer.Option("--entity-location", help="Only articles mentioning these locations (repeatable).")] = None,
+    entity_product: Annotated[list[str] | None, typer.Option("--entity-product", help="Only articles mentioning these product names (repeatable).")] = None,
+    entity_event: Annotated[list[str] | None, typer.Option("--entity-event", help="Only articles mentioning these event names (repeatable).")] = None,
+    naics_codes: Annotated[list[str] | None, typer.Option("--naics", help="Filter by NAICS industry classification code(s) (repeatable).")] = None,
+    sic_codes: Annotated[list[str] | None, typer.Option("--sic", help="Filter by SIC industry classification code(s) (repeatable).")] = None,
+    iptc_codes: Annotated[list[str] | None, typer.Option("--iptc", help="Filter by IPTC media topic code(s) (repeatable).")] = None,
+    iab_codes: Annotated[list[str] | None, typer.Option("--iab", help="Filter by IAB content taxonomy code(s) (repeatable).")] = None,
     group_articles: Annotated[bool, typer.Option("--group-articles", help="Group near-duplicate articles from the same event.")] = False,
     limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=1000, help="Max articles (max 1000).")] = 10,
     offset: Annotated[int, typer.Option("--offset", min=0, help="Pagination offset.")] = 0,
@@ -80,16 +98,13 @@ def signals(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """List news signals. Provide at least one of --company/--industry/--query/--title.
+    """List news signals. Typically anchor the search with one of
+    --company/--industry/--query/--title (all optional).
 
     The list is compact and never includes article bodies; each result carries an
     `id` — pass those to `akta news detail` for full text. Cost: 0.1/call +
     0.01/article. Filter by type with `-t` codes from `akta news types`.
     """
-    if not any([company, industry, query, title]):
-        err.print("[red]Provide at least one of[/] --company, --industry, --query, or --title.")
-        raise typer.Exit(code=EXIT_BAD_INPUT)
-
     params = {
         "company": company,
         "industry": industry,
@@ -99,7 +114,17 @@ def signals(
         "end_date": end_date,
         "sentiment_list": None if sentiment == Sentiment.all else sentiment.value,
         "news_score_list": None if news_score == NewsScore.all else news_score.value,
-        "type_list": ",".join(type_codes) if type_codes else None,
+        "type_list": _csv(type_codes),
+        "countries": _csv(countries),
+        "blacklisted": _csv(blacklisted),
+        "entity_person_list": _csv(entity_person),
+        "entity_location_list": _csv(entity_location),
+        "entity_product_list": _csv(entity_product),
+        "entity_event_list": _csv(entity_event),
+        "naics_code_list": _csv(naics_codes),
+        "sic_code_list": _csv(sic_codes),
+        "iptc_code_list": _csv(iptc_codes),
+        "iab_code_list": _csv(iab_codes),
         "group_articles": True if group_articles else None,
         "limit": limit,
         "offset": offset,

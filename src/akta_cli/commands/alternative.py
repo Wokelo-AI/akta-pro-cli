@@ -58,7 +58,7 @@ def posts(
 def employee_reviews(
     ctx: typer.Context,
     company: CompanyArg,
-    limit: LimitOpt = 10,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, help="Max reviews to return (max 100).")] = 10,
     offset: OffsetOpt = 0,
     json_out: JsonOpt = False,
     output: OutOpt = None,
@@ -80,7 +80,7 @@ def product_reviews(
         list[str] | None,
         typer.Option("--product-id", help="Product ID(s) to fetch reviews for (repeatable). Omit to list the catalog."),
     ] = None,
-    limit: Annotated[int, typer.Option("-n", "--limit", help="Max reviews per product (only with --product-id).")] = 0,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=0, max=50, help="Max reviews per product (max 50; only with --product-id).")] = 0,
     offset: OffsetOpt = 0,
     json_out: JsonOpt = False,
     output: OutOpt = None,

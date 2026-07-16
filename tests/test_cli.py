@@ -37,10 +37,32 @@ def test_missing_section_exits_2(tmp_path):
     assert res.exit_code == 2
 
 
-def test_news_signals_requires_a_filter(tmp_path):
-    res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals"],
-                        env={"XDG_CONFIG_HOME": str(tmp_path)})
-    assert res.exit_code == 2
+@respx.mock
+def test_news_signals_anchors_are_optional():
+    # Filters are optional — an un-anchored call still hits /news.
+    route = respx.get(f"{BASE}/news").mock(
+        return_value=httpx.Response(200, json={"total": 0, "count": 0,
+                                               "credits_consumed": 0.1, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals", "--json"])
+    assert res.exit_code == 0
+    assert route.called
+
+
+@respx.mock
+def test_news_signals_forwards_new_filters():
+    route = respx.get(f"{BASE}/news").mock(
+        return_value=httpx.Response(200, json={"total": 0, "count": 0,
+                                               "credits_consumed": 0.1, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals",
+                              "--country", "USA", "--country", "GBR",
+                              "--entity-person", "Melanie Perkins",
+                              "--naics", "5112", "--blacklist", "example.com", "--json"])
+    assert res.exit_code == 0
+    params = route.calls.last.request.url.params
+    assert params.get("countries") == "USA,GBR"
+    assert params.get("entity_person_list") == "Melanie Perkins"
+    assert params.get("naics_code_list") == "5112"
+    assert params.get("blacklisted") == "example.com"
 
 
 # --- core success paths ---
@@ -172,12 +194,28 @@ def test_400_maps_to_exit_2():
 
 
 @respx.mock
+def test_company_data_defaults_to_json_endpoint():
+    # No --markdown → the structured JSON endpoint, emitted as JSON.
+    route = respx.get(f"{BASE}/company/enrichment").mock(
+        return_value=httpx.Response(200, json={
+            "data": {"uuid": "abc-123", "firmographic": {"name": "Canva"}},
+            "credits_consumed": 2.0,
+        }))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
+                              "-s", "firmographic", "--json"])
+    assert res.exit_code == 0
+    assert route.called
+    assert route.calls.last.request.url.params.get("sections") == "firmographic"
+    assert '"firmographic"' in res.stdout  # JSON body, not Markdown
+
+
+@respx.mock
 def test_markdown_passthrough_with_raw():
     respx.get(f"{BASE}/company/enrichment/markdown").mock(
         return_value=httpx.Response(200, headers={"content-type": "text/markdown"},
                                     text="# Canva\n\nDesign platform."))
     res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
-                              "-s", "firmographic", "--raw"])
+                              "-s", "firmographic", "--markdown", "--raw"])
     assert res.exit_code == 0
     assert res.stdout.strip().startswith("# Canva")
 
@@ -196,7 +234,7 @@ def test_company_data_envelope_appends_credits_footer():
             "credits_consumed": 2.0,
         }))
     res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
-                              "-s", "firmographic", "--raw"])
+                              "-s", "firmographic", "--markdown", "--raw"])
     assert res.exit_code == 0
     assert res.stdout.strip().startswith("# Canva")  # markdown body unwrapped
     assert '"data"' not in res.stdout                # envelope itself never printed
@@ -210,7 +248,7 @@ def test_company_data_footer_survives_output_file(tmp_path):
         return_value=httpx.Response(200, json={"data": "# Canva", "credits_consumed": 2.0}))
     dest = tmp_path / "canva.md"
     res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
-                              "-s", "firmographic", "-o", str(dest)])
+                              "-s", "firmographic", "--markdown", "-o", str(dest)])
     assert res.exit_code == 0
     assert "Credits consumed: 2.0" in dest.read_text()  # persisted to the file
 
@@ -223,7 +261,7 @@ def test_enterprise_section_skipped_for_non_enterprise():
     route = respx.get(f"{BASE}/company/enrichment/markdown").mock(
         return_value=httpx.Response(200, headers={"content-type": "text/markdown"}, text="# Canva"))
     res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
-                              "-s", "firmographic", "-s", "mna_and_investment", "--raw"])
+                              "-s", "firmographic", "-s", "mna_and_investment", "--markdown", "--raw"])
     assert res.exit_code == 0
     assert route.calls.last.request.url.params.get("sections") == "firmographic"
 

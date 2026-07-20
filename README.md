@@ -102,10 +102,5 @@ akta reviews products canva.com --product-id p_123 -n 50
 - **`credits_consumed`** is printed to **stderr** (silence with `-q/--quiet`),
   so it never pollutes piped JSON.
 
-Exit codes: `0` success · `2` bad input · `3` auth (no/invalid key, plan gating
-403) · `4` other API/network error · `5` timeout.
-
-## Caveats
-
-- Alternative signals (headcount/traffic/jobs/posts/reviews) require a
-  Subscription or Enterprise plan; Pay-as-you-go returns `403` → exit `3`.
+Exit codes: `0` success · `2` bad input · `3` auth (no/invalid key or `403`) ·
+`4` other API/network error · `5` timeout.

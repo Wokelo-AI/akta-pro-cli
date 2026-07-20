@@ -3,12 +3,11 @@ name = "akta-cli"
 description = "Command-line client for the Akta API (api.akta.pro)"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
+license = { text = "MIT" }
 authors = [{ name = "Wokelo AI", email = "engineering@wokelo.ai" }]
 keywords = ["akta", "cli", "company-intelligence", "market-intelligence"]
 classifiers = [
-    # Guards against accidental upload to the public PyPI.
-    "Private :: Do Not Upload",
+    "License :: OSI Approved :: MIT License",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.11",
@@ -30,6 +29,7 @@ dev = [
 ]
 
 [project.urls]
+Homepage = "https://github.com/Wokelo-AI/Akta-CLI"
 Repository = "https://github.com/Wokelo-AI/Akta-CLI"
 
 [project.scripts]

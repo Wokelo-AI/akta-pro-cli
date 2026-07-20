@@ -9,20 +9,19 @@ Source: [`src/akta_cli/`](src/akta_cli). API reference: <https://docs.akta.pro>.
 
 ## Install
 
-Distributed via tagged **GitHub Releases**. Quickest path (needs read access to
-the private repo):
+Published on [PyPI](https://pypi.org/project/akta-cli/). Install with `pipx`
+(recommended for CLIs — isolated env) or `pip`:
 
 ```bash
-pipx install "git+https://github.com/Wokelo-AI/Akta-CLI@v0.2.1"
+pipx install akta-cli
+# or
+pip install akta-cli
 ```
 
-Or download the wheel from the [latest release](https://github.com/Wokelo-AI/Akta-CLI/releases)
-and `pipx install ./akta_cli-*.whl`. Full prerequisites, auth, update, and
-troubleshooting steps are in **[INSTALL.md](INSTALL.md)**.
+Then run `akta --help`. Full prerequisites, auth, update, and troubleshooting
+steps are in **[INSTALL.md](INSTALL.md)**.
 
-The `akta` command depends only on `httpx`, `typer`, `rich`. A package-index
-release (PyPI / private feed), standalone binary, and Homebrew tap are on the
-roadmap.
+The `akta` command depends only on `httpx`, `typer`, `rich`.
 
 ## Authentication
 
@@ -44,26 +43,6 @@ akta login --api-key wk_...   # store without the prompt
 akta whoami                   # show the active key (masked), its source, and validate
 akta logout                   # remove the stored key
 ```
-
-> **Browser / device OAuth** (`akta login` with no key) is planned for v2. It
-> depends on the Akta backend exposing a public/native OAuth client — today's
-> OAuth is a confidential client whose secret a CLI can't embed. Until then, use
-> an API key.
-
-### Overriding the API endpoint (local / dev testing)
-
-The default endpoint is `https://api.akta.pro/api/v1`. Override it three ways
-(precedence: flag → env → stored → default):
-
-```bash
-akta --base-url http://localhost:8000/api/v1 company search Canva   # per command
-export AKTA_API_BASE_URL=http://localhost:8000/api/v1               # per shell
-akta login --api-key wk_test --base-url http://localhost:8000/api/v1  # persist it
-```
-
-After `akta login --base-url …`, every later command targets that endpoint until
-you `akta login` again or pass `--base-url`. `akta whoami` prints the endpoint in
-effect.
 
 ## Commands
 
@@ -128,15 +107,5 @@ Exit codes: `0` success · `2` bad input · `3` auth (no/invalid key, plan gatin
 
 ## Caveats
 
-- `company data` (`/enrichment/markdown`) and `company concise`
-  (`/enrichment/concise`) are available where deployed; on environments that
-  don't have them yet they return `404`.
-- Alternative signals (headcount/traffic/jobs/posts/reviews) require
-  Subscription or Enterprise; Pay-as-you-go returns `403` → exit `3`.
-
-## Roadmap
-
-- **v2 — OAuth:** `akta login` browser flow + `--device` (needs the backend
-  public/native client).
-- **v3 — packaging breadth:** standalone binary + `curl … | sh` installer,
-  Homebrew tap (`brew install akta/tap/akta`), npm wrapper, and `akta update`.
+- Alternative signals (headcount/traffic/jobs/posts/reviews) require a
+  Subscription or Enterprise plan; Pay-as-you-go returns `403` → exit `3`.

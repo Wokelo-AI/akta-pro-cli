@@ -30,7 +30,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Wokelo-AI/Akta-CLI"
+Homepage = "https://akta.pro/"
 Repository = "https://github.com/Wokelo-AI/Akta-CLI"
 
 [project.scripts]

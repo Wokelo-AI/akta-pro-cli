@@ -3,6 +3,13 @@
 All notable changes to the Akta CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.2.5]
+
+### Changed
+- Docs: install instructions now cover the PyPI release (`pipx install akta-cli`
+  / `pip install akta-cli`), and the project homepage points to
+  <https://akta.pro/>. Trimmed roadmap/dev-only wording from the README.
+
 ## [0.2.4]
 
 ### Changed

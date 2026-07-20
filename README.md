@@ -46,22 +46,22 @@ akta-pro logout                   # remove the stored key
 
 ## Commands
 
-| Command | Endpoint | Cost | Notes |
-|---|---|---|---|
-| `akta-pro account` | `/mcp/account` | free | your tier + credit balance |
-| `akta-pro company search <query>` | `/company/search` | free | run first; returns `uuid` |
-| `akta-pro company data <company> -s ...` | `/company/enrichment` (JSON; `--markdown` → `/company/enrichment/markdown`) | per section | requires ≥1 `--section` |
-| `akta-pro company concise <company>` | `/company/enrichment/concise` | 8 | slimmed JSON |
-| `akta-pro industry search <query>` | `/industry/search` | free | codes feed `news signals --industry` |
-| `akta-pro news signals [filters]` | `/news` | 0.1 + 0.01/article | anchor with `--company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); compact list with `id`s |
-| `akta-pro news detail <id>...` | `/news/by-id/` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
-| `akta-pro news types` | none (embedded) | free | tag codes for `--type-code`; offline, no key |
-| `akta-pro headcount <company>` | `/company/headcount-trends` | 2.5 | Subscription/Enterprise |
-| `akta-pro traffic <company>` | `/company/website-traffic` | 1.5 | Subscription/Enterprise |
-| `akta-pro jobs <company>` | `/company/jobs` | 3 | Subscription/Enterprise |
-| `akta-pro posts <company>` | `/company/posts` | 1.5 | Subscription/Enterprise |
-| `akta-pro reviews employees <company>` | `/company/employee-reviews` | 1.5/50 | Subscription/Enterprise; `-n/--limit` max 100 |
-| `akta-pro reviews products <company>` | `/company/product-reviews` | 1.5/50 | catalog first, then `--product-id`; `-n/--limit` max 50 per product |
+| Command | Cost | Notes |
+|---|---|---|
+| `akta-pro account` | free | your tier + credit balance |
+| `akta-pro company search <query>` | free | run first; returns `uuid` |
+| `akta-pro company data <company> -s ...` | per section | requires ≥1 `--section`; `--markdown` for a rendered report |
+| `akta-pro company concise <company>` | 8 | slimmed JSON |
+| `akta-pro industry search <query>` | free | codes feed `news signals --industry` |
+| `akta-pro news signals [filters]` | 0.1 + 0.01/article | anchor with `--company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); compact list with `id`s |
+| `akta-pro news detail <id>...` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
+| `akta-pro news types` | free | tag codes for `--type-code`; offline, no key |
+| `akta-pro headcount <company>` | 2.5 | Subscription/Enterprise |
+| `akta-pro traffic <company>` | 1.5 | Subscription/Enterprise |
+| `akta-pro jobs <company>` | 3 | Subscription/Enterprise |
+| `akta-pro posts <company>` | 1.5 | Subscription/Enterprise |
+| `akta-pro reviews employees <company>` | 1.5/50 | Subscription/Enterprise; `-n/--limit` max 100 |
+| `akta-pro reviews products <company>` | 1.5/50 | catalog first, then `--product-id`; `-n/--limit` max 50 per product |
 
 `company data` sections (each billed separately): `firmographic`,
 `business_model`, `company_assessment`, `trust_signal`, `company_hierarchy`,

@@ -3,6 +3,13 @@
 All notable changes to the Akta CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.2.4]
+
+### Changed
+- Relicensed under the **MIT License** (was proprietary) and removed the
+  `Private :: Do Not Upload` classifier — the CLI is now published to PyPI and
+  installable with `pip install akta-cli`.
+
 ## [0.2.3]
 
 ### Changed

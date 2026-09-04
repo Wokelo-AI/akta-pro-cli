@@ -260,6 +260,19 @@ def test_list_generate_requires_query_or_filters():
     assert res.exit_code == 2
 
 
+def test_list_generate_missing_filters_file_exits_2():
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate", "companies",
+                              "--filters", "@/nonexistent/nope.json"])
+    assert res.exit_code == 2
+    assert "Cannot read --filters file" in res.output
+
+
+def test_news_signals_rejects_both_company_flags():
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals",
+                              "--company", "canva.com", "--primary-company", "nvidia.com"])
+    assert res.exit_code == 2
+
+
 @respx.mock
 def test_list_generate_with_filters():
     route = respx.post(f"{BASE}/list/generate/companies").mock(

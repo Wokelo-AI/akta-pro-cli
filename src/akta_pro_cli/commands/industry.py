@@ -9,7 +9,7 @@ import typer
 from rich.table import Table
 
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import csv, emit, fetch
+from akta_pro_cli.runtime import csv_join, emit, fetch
 
 app = typer.Typer(no_args_is_help=True, help="Industry search.")
 
@@ -55,6 +55,6 @@ def search(
 
     Use the returned `code` values as `--industry` in `akta-pro news`.
     """
-    params = {"query": query, "level": csv([lv.value for lv in level] if level else None)}
+    params = {"query": query, "level": csv_join([lv.value for lv in level] if level else None)}
     result = fetch(ctx.obj, "/industry/search", params)
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_industry_table)

@@ -89,7 +89,7 @@ app.add_typer(industry.app, name="industry")
 app.add_typer(region.app, name="region")
 app.add_typer(news.app, name="news")          # signals, detail, types
 app.add_typer(alternative.reviews_app, name="reviews")
-app.add_typer(list_gen.app, name="list")      # generate, filter-builder
+app.add_typer(list_gen.app, name="list")      # generate, filters, filter-options, filter-builder
 
 # Top-level commands
 auth.register(app)          # login, logout, whoami

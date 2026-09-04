@@ -32,11 +32,7 @@ class AktaAPIError(RuntimeError):
 _ERROR_MESSAGES = {
     400: "Bad request — check the parameters.",
     401: "Authentication failed. Check your API key (`akta-pro login`).",
-    403: (
-        "Access denied — your plan or credit balance does not cover this data "
-        "(alternative signals require Subscription/Enterprise; Funding and M&A "
-        "sections are enterprise-only)."
-    ),
+    403: "Access denied — your plan or credit balance does not cover this request.",
     404: "Not found.",
     429: "Rate limit exceeded. Retry with backoff.",
     500: "akta.pro server error. Please try again later.",
@@ -65,7 +61,7 @@ def _clean(params: dict | None) -> dict:
 
 
 class AktaClient:
-    """Thin synchronous httpx wrapper that sends `x-api-key` on every GET."""
+    """Thin synchronous httpx wrapper that sends `x-api-key` on every request."""
 
     def __init__(self, base_url: str, api_key: str, timeout: float = 30.0):
         self._api_key = api_key

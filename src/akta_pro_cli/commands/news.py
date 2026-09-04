@@ -14,7 +14,7 @@ from rich.text import Text
 from akta_pro_cli.console import err
 from akta_pro_cli.news_tags import NEWS_CATEGORIES, NEWS_TAGS
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, csv, emit, fetch
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, csv_join, emit, fetch
 
 app = typer.Typer(no_args_is_help=True, help="News signals, article detail, and the type taxonomy.")
 
@@ -99,6 +99,9 @@ def signals(
     `id` — pass those to `akta-pro news detail` for full text. Cost: 0.1/call +
     0.01/article. Filter by type with `-t` codes from `akta-pro news types`.
     """
+    if company and primary_company:
+        err.print("[red]Pass either --company or --primary-company, not both.[/]")
+        raise typer.Exit(code=EXIT_BAD_INPUT)
     params = {
         "company": company,
         "primary_company": primary_company,
@@ -109,18 +112,18 @@ def signals(
         "end_date": end_date,
         "sentiment_list": None if sentiment == Sentiment.all else sentiment.value,
         "news_score_list": None if news_score == NewsScore.all else news_score.value,
-        "type_list": csv(type_codes),
-        "countries": csv(countries),
-        "blacklisted": csv(blacklisted),
-        "publishers": csv(publishers),
-        "entity_person_list": csv(entity_person),
-        "entity_location_list": csv(entity_location),
-        "entity_product_list": csv(entity_product),
-        "entity_event_list": csv(entity_event),
-        "naics_code_list": csv(naics_codes),
-        "sic_code_list": csv(sic_codes),
-        "iptc_code_list": csv(iptc_codes),
-        "iab_code_list": csv(iab_codes),
+        "type_list": csv_join(type_codes),
+        "countries": csv_join(countries),
+        "blacklisted": csv_join(blacklisted),
+        "publishers": csv_join(publishers),
+        "entity_person_list": csv_join(entity_person),
+        "entity_location_list": csv_join(entity_location),
+        "entity_product_list": csv_join(entity_product),
+        "entity_event_list": csv_join(entity_event),
+        "naics_code_list": csv_join(naics_codes),
+        "sic_code_list": csv_join(sic_codes),
+        "iptc_code_list": csv_join(iptc_codes),
+        "iab_code_list": csv_join(iab_codes),
         "group_articles": True if group_articles else None,
         "limit": limit,
         "offset": offset,

@@ -118,7 +118,7 @@ def post(ctx: AppContext, path: str, json_body: dict | None = None) -> Any:
     return _call(ctx, "post", path, json=json_body)
 
 
-def csv(values: list[str] | None) -> str | None:
+def csv_join(values: list[str] | None) -> str | None:
     """Join repeatable-option values into the comma-separated string the API
     expects (or None when nothing was passed)."""
     if not values:

@@ -13,7 +13,7 @@ import typer
 
 from akta_pro_cli.console import err
 from akta_pro_cli.options import CompanyArg, JsonOpt, LimitOpt, OffsetOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, csv, emit, fetch
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, csv_join, emit, fetch
 
 reviews_app = typer.Typer(
     no_args_is_help=True,
@@ -44,7 +44,7 @@ def jobs(
     if not company and not job_id:
         err.print("[red]Provide a company or at least one --job-id.[/]")
         raise typer.Exit(code=EXIT_BAD_INPUT)
-    params = {"company": company, "job_id_list": csv(job_id), "limit": limit, "offset": offset}
+    params = {"company": company, "job_id_list": csv_join(job_id), "limit": limit, "offset": offset}
     emit(ctx.obj, fetch(ctx.obj, "/company/jobs", params), json_out=json_out, output=output)
 
 

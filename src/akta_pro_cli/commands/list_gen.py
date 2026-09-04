@@ -20,7 +20,14 @@ app.add_typer(generate_app, name="generate")
 
 def _load_filters(raw: str) -> dict:
     """A JSON object, given inline or as `@path/to/file.json`."""
-    text = Path(raw[1:]).read_text() if raw.startswith("@") else raw
+    if raw.startswith("@"):
+        try:
+            text = Path(raw[1:]).read_text()
+        except OSError as exc:
+            err.print(f"[red]Cannot read --filters file:[/] {exc}")
+            raise typer.Exit(code=EXIT_BAD_INPUT) from exc
+    else:
+        text = raw
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as exc:

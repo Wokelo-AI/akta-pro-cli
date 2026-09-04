@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Akta CLI are documented here. The format follows
+All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
 ## [0.4.0]

@@ -11,8 +11,9 @@ from typing import Annotated
 
 import typer
 
+from akta_pro_cli.console import err
 from akta_pro_cli.options import CompanyArg, JsonOpt, LimitOpt, OffsetOpt, OutOpt
-from akta_pro_cli.runtime import emit, fetch
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, csv, emit, fetch
 
 reviews_app = typer.Typer(
     no_args_is_help=True,
@@ -32,14 +33,19 @@ def traffic(ctx: typer.Context, company: CompanyArg, json_out: JsonOpt = False, 
 
 def jobs(
     ctx: typer.Context,
-    company: CompanyArg,
+    company: Annotated[str | None, typer.Argument(help="Company website or akta.pro UUID. Omit when using --job-id.")] = None,
+    job_id: Annotated[list[str] | None, typer.Option("--job-id", help="Specific internal job id(s) to fetch (repeatable) — skips the company lookup.")] = None,
     limit: LimitOpt = 10,
     offset: OffsetOpt = 0,
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Live job posts: title, location, description, comp, level, skills. 3 credits."""
-    emit(ctx.obj, fetch(ctx.obj, "/company/jobs", {"company": company, "limit": limit, "offset": offset}), json_out=json_out, output=output)
+    """Live job posts: title, location, description, comp, level, skills. 4 credits per 10 returned."""
+    if not company and not job_id:
+        err.print("[red]Provide a company or at least one --job-id.[/]")
+        raise typer.Exit(code=EXIT_BAD_INPUT)
+    params = {"company": company, "job_id_list": csv(job_id), "limit": limit, "offset": offset}
+    emit(ctx.obj, fetch(ctx.obj, "/company/jobs", params), json_out=json_out, output=output)
 
 
 def posts(
@@ -50,7 +56,7 @@ def posts(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Company social posts: content, date, paid/repost flags, engagement. 1.5 credits."""
+    """Company social posts: content, date, paid/repost flags, engagement. 1 credit per 10 returned."""
     emit(ctx.obj, fetch(ctx.obj, "/company/posts", {"company": company, "limit": limit, "offset": offset}), json_out=json_out, output=output)
 
 

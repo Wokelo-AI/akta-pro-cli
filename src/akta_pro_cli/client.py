@@ -77,13 +77,10 @@ class AktaClient:
     def _headers(self) -> dict:
         return {"x-api-key": self._api_key, "X-Client-Source": CLIENT_SOURCE}
 
-    def get(self, path: str, params: dict | None = None):
-        """GET, returning parsed JSON when the response is JSON, else raw text.
-
-        Text is returned for Akta's server-rendered Markdown endpoints (e.g.
-        `/company/enrichment/markdown`).
-        """
-        resp = self._http.get(path, params=_clean(params), headers=self._headers())
+    def _send(self, method: str, path: str, **kwargs):
+        """Send a request, returning parsed JSON when the response is JSON, else
+        raw text (Akta's server-rendered Markdown endpoints reply as text)."""
+        resp = self._http.request(method, path, headers=self._headers(), **kwargs)
         try:
             resp.raise_for_status()
         except httpx.HTTPStatusError as exc:
@@ -91,6 +88,12 @@ class AktaClient:
         if "json" in resp.headers.get("content-type", "").lower():
             return resp.json()
         return resp.text
+
+    def get(self, path: str, params: dict | None = None):
+        return self._send("GET", path, params=_clean(params))
+
+    def post(self, path: str, json: dict | None = None):
+        return self._send("POST", path, json=json)
 
     def close(self) -> None:
         self._http.close()

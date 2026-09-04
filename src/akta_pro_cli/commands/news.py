@@ -14,7 +14,7 @@ from rich.text import Text
 from akta_pro_cli.console import err
 from akta_pro_cli.news_tags import NEWS_CATEGORIES, NEWS_TAGS
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, csv, emit, fetch
 
 app = typer.Typer(no_args_is_help=True, help="News signals, article detail, and the type taxonomy.")
 
@@ -42,14 +42,6 @@ def _shape(article: dict, *, full: bool) -> dict:
     return {k: article.get(k) for k in _STRIPPED_FIELDS}
 
 
-def _csv(values: list[str] | None) -> str | None:
-    """Join repeatable-option values into the comma-separated string the API
-    expects (or None when nothing was passed)."""
-    if not values:
-        return None
-    return ",".join(v.strip() for v in values if v.strip()) or None
-
-
 def _signals_table(result: object) -> Table | None:
     rows = result.get("data") if isinstance(result, dict) else None
     if not rows:
@@ -73,6 +65,7 @@ def _signals_table(result: object) -> Table | None:
 def signals(
     ctx: typer.Context,
     company: Annotated[str | None, typer.Option("--company", help="Company website or akta.pro UUID.")] = None,
+    primary_company: Annotated[str | None, typer.Option("--primary-company", help="Company website or UUID; only articles where it's the primary subject. Mutually exclusive with --company.")] = None,
     industry: Annotated[str | None, typer.Option("--industry", help="Comma-separated industry codes (from `akta-pro industry search`) — preferred for sector/market topics.")] = None,
     query: Annotated[str | None, typer.Option("--query", help="Open-ended topic, e.g. 'crude oil prices' (last resort; prefer --company/--industry).")] = None,
     title: Annotated[str | None, typer.Option("--title", help="Search by text in the article title.")] = None,
@@ -83,6 +76,7 @@ def signals(
     news_score: Annotated[NewsScore, typer.Option("--news-score", help="Filter by relevance/quality tier.")] = NewsScore.all,
     countries: Annotated[list[str] | None, typer.Option("--country", help="Filter by the event's country — ISO codes, e.g. USA, GBR (repeatable).")] = None,
     blacklisted: Annotated[list[str] | None, typer.Option("--blacklist", help="Publisher domain(s) to exclude, e.g. example.com (repeatable).")] = None,
+    publishers: Annotated[list[str] | None, typer.Option("--publisher", help="Only include these publisher domain(s), e.g. reuters.com (repeatable). Opposite of --blacklist.")] = None,
     entity_person: Annotated[list[str] | None, typer.Option("--entity-person", help="Only articles mentioning these people, by name (repeatable).")] = None,
     entity_location: Annotated[list[str] | None, typer.Option("--entity-location", help="Only articles mentioning these locations (repeatable).")] = None,
     entity_product: Annotated[list[str] | None, typer.Option("--entity-product", help="Only articles mentioning these product names (repeatable).")] = None,
@@ -99,7 +93,7 @@ def signals(
     output: OutOpt = None,
 ) -> None:
     """List news signals. Typically anchor the search with one of
-    --company/--industry/--query/--title (all optional).
+    --company/--primary-company/--industry/--query/--title (all optional).
 
     The list is compact and never includes article bodies; each result carries an
     `id` — pass those to `akta-pro news detail` for full text. Cost: 0.1/call +
@@ -107,6 +101,7 @@ def signals(
     """
     params = {
         "company": company,
+        "primary_company": primary_company,
         "industry": industry,
         "query": query,
         "title": title,
@@ -114,17 +109,18 @@ def signals(
         "end_date": end_date,
         "sentiment_list": None if sentiment == Sentiment.all else sentiment.value,
         "news_score_list": None if news_score == NewsScore.all else news_score.value,
-        "type_list": _csv(type_codes),
-        "countries": _csv(countries),
-        "blacklisted": _csv(blacklisted),
-        "entity_person_list": _csv(entity_person),
-        "entity_location_list": _csv(entity_location),
-        "entity_product_list": _csv(entity_product),
-        "entity_event_list": _csv(entity_event),
-        "naics_code_list": _csv(naics_codes),
-        "sic_code_list": _csv(sic_codes),
-        "iptc_code_list": _csv(iptc_codes),
-        "iab_code_list": _csv(iab_codes),
+        "type_list": csv(type_codes),
+        "countries": csv(countries),
+        "blacklisted": csv(blacklisted),
+        "publishers": csv(publishers),
+        "entity_person_list": csv(entity_person),
+        "entity_location_list": csv(entity_location),
+        "entity_product_list": csv(entity_product),
+        "entity_event_list": csv(entity_event),
+        "naics_code_list": csv(naics_codes),
+        "sic_code_list": csv(sic_codes),
+        "iptc_code_list": csv(iptc_codes),
+        "iab_code_list": csv(iab_codes),
         "group_articles": True if group_articles else None,
         "limit": limit,
         "offset": offset,

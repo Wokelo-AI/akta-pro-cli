@@ -15,7 +15,10 @@ from akta_pro_cli.commands import (
     company,
     config,
     industry,
+    list_gen,
     news,
+    region,
+    status,
     update,
 )
 from akta_pro_cli.console import err, out
@@ -81,14 +84,17 @@ def main(
 
 
 # Command groups
-app.add_typer(company.app, name="company")
+app.add_typer(company.app, name="company")    # search, data, concise, add
 app.add_typer(industry.app, name="industry")
+app.add_typer(region.app, name="region")
 app.add_typer(news.app, name="news")          # signals, detail, types
 app.add_typer(alternative.reviews_app, name="reviews")
+app.add_typer(list_gen.app, name="list")      # generate, filter-builder
 
 # Top-level commands
 auth.register(app)          # login, logout, whoami
 account.register(app)       # account
 config.register(app)        # config show / base-url
 update.register(app)        # update (self-update / check)
+status.register(app)        # status <request_id>
 alternative.register(app)   # headcount, traffic, jobs, posts

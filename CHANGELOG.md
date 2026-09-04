@@ -3,6 +3,19 @@
 All notable changes to the Akta CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.4.0]
+
+### Added
+- `akta-pro list generate` and `akta-pro list filter-builder` — the List
+  Generation API: fetch a company list from structured `--filters` or a
+  free-text `--query`.
+- `akta-pro company add <name> <website>` and `akta-pro status <request_id>` —
+  submit a missing company and poll its addition request.
+- `akta-pro region search` — resolve region names to UN M49 codes.
+- `akta-pro industry search --level` — scope by taxonomy depth (l1-l4/all).
+- `akta-pro news signals --primary-company` and `--publisher`.
+- `akta-pro jobs --job-id` — fetch specific jobs without a company.
+
 ## [0.3.0]
 
 ### Changed

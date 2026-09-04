@@ -89,12 +89,12 @@ def _exit_code_for_status(status: int) -> int:
     return EXIT_API
 
 
-def fetch(ctx: AppContext, path: str, params: dict | None = None) -> Any:
-    """Resolve the key, GET `path`, and translate errors into `typer.Exit`."""
+def _call(ctx: AppContext, method: str, path: str, **kwargs) -> Any:
+    """Resolve the key, call `method` on `path`, and translate errors into `typer.Exit`."""
     key = resolve_api_key(ctx)
     client = AktaClient(resolve_base_url(ctx), key, timeout=ctx.timeout)
     try:
-        return client.get(path, params=params)
+        return getattr(client, method)(path, **kwargs)
     except AktaAPIError as exc:
         err.print(f"[red]Error {exc.status_code}:[/] {exc}")
         raise typer.Exit(code=_exit_code_for_status(exc.status_code)) from exc
@@ -106,6 +106,24 @@ def fetch(ctx: AppContext, path: str, params: dict | None = None) -> Any:
         raise typer.Exit(code=EXIT_API) from exc
     finally:
         client.close()
+
+
+def fetch(ctx: AppContext, path: str, params: dict | None = None) -> Any:
+    """GET `path`."""
+    return _call(ctx, "get", path, params=params)
+
+
+def post(ctx: AppContext, path: str, json_body: dict | None = None) -> Any:
+    """POST `json_body` to `path`."""
+    return _call(ctx, "post", path, json=json_body)
+
+
+def csv(values: list[str] | None) -> str | None:
+    """Join repeatable-option values into the comma-separated string the API
+    expects (or None when nothing was passed)."""
+    if not values:
+        return None
+    return ",".join(v.strip() for v in values if v.strip()) or None
 
 
 def _json_text(result: Any) -> str:

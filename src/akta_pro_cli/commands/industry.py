@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Annotated
 
 import typer
 from rich.table import Table
 
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import emit, fetch
+from akta_pro_cli.runtime import csv, emit, fetch
 
 app = typer.Typer(no_args_is_help=True, help="Industry search.")
+
+
+class Level(str, Enum):
+    l1 = "l1"
+    l2 = "l2"
+    l3 = "l3"
+    l4 = "l4"
+    all = "all"
 
 
 def _industry_table(result: object) -> Table | None:
@@ -35,6 +44,10 @@ def _industry_table(result: object) -> Table | None:
 def search(
     ctx: typer.Context,
     query: Annotated[str, typer.Argument(help="Free-text industry or topic, e.g. 'warehouse automation'.")],
+    level: Annotated[
+        list[Level] | None,
+        typer.Option("--level", help="Taxonomy depth(s) to search: l1 (broadest) to l4 (most granular), or 'all' (repeatable). Default l4."),
+    ] = None,
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
@@ -42,5 +55,6 @@ def search(
 
     Use the returned `code` values as `--industry` in `akta-pro news`.
     """
-    result = fetch(ctx.obj, "/industry/search", {"query": query})
+    params = {"query": query, "level": csv([lv.value for lv in level] if level else None)}
+    result = fetch(ctx.obj, "/industry/search", params)
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_industry_table)

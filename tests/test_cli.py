@@ -65,6 +65,21 @@ def test_news_signals_forwards_new_filters():
     assert params.get("blacklisted") == "example.com"
 
 
+@respx.mock
+def test_news_signals_forwards_primary_company_and_publishers():
+    route = respx.get(f"{BASE}/news").mock(
+        return_value=httpx.Response(200, json={"total": 0, "count": 0,
+                                               "credits_consumed": 0.1, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals",
+                              "--primary-company", "canva.com",
+                              "--publisher", "reuters.com", "--json"])
+    assert res.exit_code == 0
+    params = route.calls.last.request.url.params
+    assert params.get("primary_company") == "canva.com"
+    assert params.get("publishers") == "reuters.com"
+    assert "company" not in params
+
+
 # --- core success paths ---
 
 @respx.mock
@@ -92,6 +107,28 @@ def test_account():
     res = runner.invoke(app, ["--api-key", "wk_dummy", "account", "--json"])
     assert res.exit_code == 0
     assert '"package_type": "top_up"' in res.stdout
+
+
+# --- industry / region ---
+
+@respx.mock
+def test_industry_search_forwards_level():
+    route = respx.get(f"{BASE}/industry/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "industry", "search", "fintech",
+                              "--level", "l2", "--level", "l3", "--json"])
+    assert res.exit_code == 0
+    assert route.calls.last.request.url.params.get("level") == "l2,l3"
+
+
+@respx.mock
+def test_region_search():
+    respx.get(f"{BASE}/region/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0,
+                                               "data": [{"code": "150", "name": "Europe"}]}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "region", "search", "europe", "--json"])
+    assert res.exit_code == 0
+    assert '"code": "150"' in res.stdout
 
 
 # --- news group ---
@@ -173,6 +210,78 @@ def test_news_types_offline_no_key():
     data = json.loads(res.stdout)
     assert data["count"] == 77
     assert any(t["code"] == "CM03" for cat in data["categories"] for t in cat["codes"])
+
+
+# --- jobs by id / company add / status / list generation ---
+
+@respx.mock
+def test_jobs_by_id_skips_company():
+    route = respx.get(f"{BASE}/company/jobs").mock(
+        return_value=httpx.Response(200, json={"status": "success", "data": [], "count": 0,
+                                               "credits_consumed": 0}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "jobs", "--job-id", "j1", "--job-id", "j2", "--json"])
+    assert res.exit_code == 0
+    params = route.calls.last.request.url.params
+    assert params.get("job_id_list") == "j1,j2"
+    assert "company" not in params
+
+
+def test_jobs_without_company_or_id_exits_2():
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "jobs"])
+    assert res.exit_code == 2
+
+
+@respx.mock
+def test_company_add_posts_json_body():
+    route = respx.post(f"{BASE}/company/addition-requests").mock(
+        return_value=httpx.Response(200, json={"already_exists": False, "request_id": "abc-123",
+                                               "status": "pending", "domain": "solios.co",
+                                               "credits_consumed": 0}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "add", "Solios", "solios.co", "--json"])
+    assert res.exit_code == 0
+    assert json.loads(route.calls.last.request.content) == {"company_name": "Solios", "website": "solios.co"}
+    assert '"request_id": "abc-123"' in res.stdout
+
+
+@respx.mock
+def test_status_fetches_by_request_id():
+    route = respx.get(f"{BASE}/status/abc-123").mock(
+        return_value=httpx.Response(200, json={"request_id": "abc-123", "request_type": "company_addition",
+                                               "detail": {"status": "pending"}}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "status", "abc-123", "--json"])
+    assert res.exit_code == 0
+    assert route.called
+    assert '"status": "pending"' in res.stdout
+
+
+@respx.mock
+def test_list_generate_requires_query_or_filters():
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate"])
+    assert res.exit_code == 2
+
+
+@respx.mock
+def test_list_generate_with_filters():
+    route = respx.post(f"{BASE}/list/generate/companies").mock(
+        return_value=httpx.Response(200, json={"data": [], "count": 0, "total_count": 0,
+                                               "credits_consumed": 0}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate",
+                              "--filters", '{"location.hq.country": "USA"}', "--json"])
+    assert res.exit_code == 0
+    body = json.loads(route.calls.last.request.content)
+    assert body["filters"] == {"location.hq.country": "USA"}
+    assert body["query"] is None
+
+
+@respx.mock
+def test_list_filter_builder():
+    route = respx.post(f"{BASE}/list/filter-builder").mock(
+        return_value=httpx.Response(200, json={"data": {"filters": {"industry.industry": "fintech"}},
+                                               "credits_consumed": 2.5}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "filter-builder",
+                              "US fintechs", "--json"])
+    assert res.exit_code == 0
+    assert json.loads(route.calls.last.request.content) == {"query": "US fintechs"}
 
 
 # --- error → exit-code mapping ---

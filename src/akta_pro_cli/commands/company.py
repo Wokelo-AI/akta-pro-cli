@@ -10,7 +10,7 @@ from rich.table import Table
 
 from akta_pro_cli.console import err
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, probe_is_enterprise
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, post, probe_is_enterprise
 
 app = typer.Typer(no_args_is_help=True, help="Company search, enrichment, and concise overview.")
 
@@ -102,7 +102,7 @@ def data(
 
     Credits per section: firmographic 2, business_model 2, company_assessment 2,
     trust_signal 0.5, company_hierarchy 0.5, digital_presence 0.5,
-    financial_estimate 0.5, location 0.5, management_profile 1.5,
+    financial_estimate 0.5, location 0.5, management_profile 1,
     product_offering 2, strategic_signal 1.5, customer_profile 1, industry 1,
     technology 2, funding_detail 3 (enterprise), mna_and_investment 5 (enterprise).
 
@@ -170,6 +170,23 @@ def data(
         body = f"{body.rstrip()}\n\n---\n_{' · '.join(footer_parts)}_\n"
 
     emit(ctx.obj, body, json_out=raw, output=output, markdown=True)
+
+
+@app.command("add")
+def add(
+    ctx: typer.Context,
+    name: Annotated[str, typer.Argument(help="Company name to submit, e.g. 'Solios'.")],
+    website: Annotated[str, typer.Argument(help="Company website, e.g. 'solios.co'.")],
+    json_out: JsonOpt = False,
+    output: OutOpt = None,
+) -> None:
+    """Submit a company missing from akta.pro for addition (free).
+
+    Returns `already_exists` if it's already in akta.pro (with its details),
+    else a `request_id` to poll with `akta-pro status <request_id>`.
+    """
+    result = post(ctx.obj, "/company/addition-requests", {"company_name": name, "website": website})
+    emit(ctx.obj, result, json_out=json_out, output=output)
 
 
 @app.command("concise")

@@ -15,8 +15,8 @@ All notable changes to the akta.pro CLI are documented here. The format follows
   submit a missing company and poll its addition request.
 - `akta-pro region search` — resolve region names to UN M49 codes.
 - `akta-pro industry search --level` — scope by taxonomy depth (l1-l4/all).
-- `akta-pro news signals --primary-company` and `--publisher`.
-- `akta-pro jobs --job-id` — fetch specific jobs without a company.
+- `akta-pro news signals --primary-company` — restrict to articles where the
+  company is the primary subject.
 
 ## [0.3.0]
 

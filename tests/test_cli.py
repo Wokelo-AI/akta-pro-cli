@@ -66,17 +66,15 @@ def test_news_signals_forwards_new_filters():
 
 
 @respx.mock
-def test_news_signals_forwards_primary_company_and_publishers():
+def test_news_signals_forwards_primary_company():
     route = respx.get(f"{BASE}/news").mock(
         return_value=httpx.Response(200, json={"total": 0, "count": 0,
                                                "credits_consumed": 0.1, "data": []}))
     res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals",
-                              "--primary-company", "canva.com",
-                              "--publisher", "reuters.com", "--json"])
+                              "--primary-company", "canva.com", "--json"])
     assert res.exit_code == 0
     params = route.calls.last.request.url.params
     assert params.get("primary_company") == "canva.com"
-    assert params.get("publishers") == "reuters.com"
     assert "company" not in params
 
 
@@ -212,24 +210,7 @@ def test_news_types_offline_no_key():
     assert any(t["code"] == "CM03" for cat in data["categories"] for t in cat["codes"])
 
 
-# --- jobs by id / company add / status / list generation ---
-
-@respx.mock
-def test_jobs_by_id_skips_company():
-    route = respx.get(f"{BASE}/company/jobs").mock(
-        return_value=httpx.Response(200, json={"status": "success", "data": [], "count": 0,
-                                               "credits_consumed": 0}))
-    res = runner.invoke(app, ["--api-key", "wk_dummy", "jobs", "--job-id", "j1", "--job-id", "j2", "--json"])
-    assert res.exit_code == 0
-    params = route.calls.last.request.url.params
-    assert params.get("job_id_list") == "j1,j2"
-    assert "company" not in params
-
-
-def test_jobs_without_company_or_id_exits_2():
-    res = runner.invoke(app, ["--api-key", "wk_dummy", "jobs"])
-    assert res.exit_code == 2
-
+# --- company add / status / list generation ---
 
 @respx.mock
 def test_company_add_posts_json_body():

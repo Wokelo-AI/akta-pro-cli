@@ -274,6 +274,31 @@ def test_list_generate_with_filters():
 
 
 @respx.mock
+def test_list_filters():
+    respx.get(f"{BASE}/filters/list").mock(
+        return_value=httpx.Response(200, json={"count": 1, "usage": "...", "filters": [
+            {"filter": "firmographic.company_type", "value_shape": "string | list[string]",
+             "description": "...", "how_to_get_values": "look up with /list/options/",
+             "dropdown_type": "firmographic.company_type"}]}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "filters", "--json"])
+    assert res.exit_code == 0
+
+
+@respx.mock
+def test_list_filter_options():
+    route = respx.post(f"{BASE}/filters/options").mock(
+        return_value=httpx.Response(200, json={"results": [
+            {"dropdown_type": "location.hq.country", "query": None, "count": 1,
+             "total_available": 1, "truncated": False,
+             "data": [{"label": "United States", "value": "USA"}]}]}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "filter-options",
+                              "location.hq.country", "--json"])
+    assert res.exit_code == 0
+    body = json.loads(route.calls.last.request.content)
+    assert body["dropdowns"] == [{"dropdown_type": "location.hq.country", "query": None, "limit": 100}]
+
+
+@respx.mock
 def test_list_filter_builder():
     route = respx.post(f"{BASE}/list/filter-builder").mock(
         return_value=httpx.Response(200, json={"data": {"filters": {"industry.industry": "fintech"}},

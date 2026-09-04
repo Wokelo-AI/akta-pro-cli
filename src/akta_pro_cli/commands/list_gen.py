@@ -8,9 +8,10 @@ from typing import Annotated
 
 import typer
 
+from akta_pro_cli.commands.industry import Level
 from akta_pro_cli.console import err
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, post
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, post
 
 app = typer.Typer(no_args_is_help=True, help="Generate company lists from structured filters or free text.")
 generate_app = typer.Typer(no_args_is_help=True, help="Generate lists (companies, ...).")
@@ -66,6 +67,43 @@ def generate_companies(
         "skip_unavailable_sections": skip_unavailable,
     }
     result = post(ctx.obj, "/list/generate/companies", body)
+    emit(ctx.obj, result, json_out=json_out, output=output)
+
+
+@app.command("filters")
+def filters(ctx: typer.Context, json_out: JsonOpt = False, output: OutOpt = None) -> None:
+    """List the fields `--filters` accepts, keyed by their enrichment-document path (free).
+
+    Entries with a `dropdown_type` have a fixed set of values — look them up
+    with `akta-pro list filter-options <dropdown_type>`. Others take their
+    value directly (a range, a bool, or free text).
+    """
+    result = fetch(ctx.obj, "/filters/list")
+    emit(ctx.obj, result, json_out=json_out, output=output)
+
+
+@app.command("filter-options")
+def filter_options(
+    ctx: typer.Context,
+    dropdown_type: Annotated[str, typer.Argument(help="A `dropdown_type`/`filter` from `akta-pro list filters`, e.g. 'location.hq.country'.")],
+    query: Annotated[str | None, typer.Option("--query", help="Search text — required for industry/naics/sic and investor lookups.")] = None,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=1000, help="Max values to return.")] = 100,
+    level: Annotated[
+        list[Level] | None,
+        typer.Option("--level", help="Industry taxonomy depth(s) to search — only for 'industry.industry' (repeatable). Default l4."),
+    ] = None,
+    json_out: JsonOpt = False,
+    output: OutOpt = None,
+) -> None:
+    """Look up the allowed values for one filter field (free).
+
+    Use the returned `value` (or `code`/`uuid`) verbatim as that filter's
+    value in `list generate companies --filters`.
+    """
+    dropdown = {"dropdown_type": dropdown_type, "query": query, "limit": limit}
+    if level:
+        dropdown["level"] = [lv.value for lv in level]
+    result = post(ctx.obj, "/filters/options", {"dropdowns": [dropdown]})
     emit(ctx.obj, result, json_out=json_out, output=output)
 
 

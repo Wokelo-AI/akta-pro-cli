@@ -60,6 +60,8 @@ akta-pro logout                   # remove the stored key
 | `akta-pro news detail <id>...` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
 | `akta-pro news types` | free | tag codes for `--type-code`; offline, no key |
 | `akta-pro list generate companies` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation) or `--filters` (JSON/@file), `-s/--section`, `--sort-by/--sort-order`, `-n/--limit`, `--offset` |
+| `akta-pro list filters` | free | fields `--filters` accepts, and which have lookup-able values |
+| `akta-pro list filter-options <dropdown_type>` | free | allowed values for one filter field; `--query`, `-n/--limit`, `--level` |
 | `akta-pro list filter-builder <query>` | 2.5 | translate free text into structured `--filters` JSON for `list generate companies` |
 | `akta-pro headcount <company>` | 2.5 | Subscription/Enterprise |
 | `akta-pro traffic <company>` | 1.5 | Subscription/Enterprise |
@@ -96,6 +98,8 @@ akta-pro reviews products canva.com                               # list catalog
 akta-pro reviews products canva.com --product-id p_123 -n 50
 akta-pro company add "Solios" solios.co                           # request a missing company
 akta-pro status <request_id>                                      # poll that request
+akta-pro list filters                                             # which fields --filters accepts
+akta-pro list filter-options location.hq.country                  # -> allowed values for that field
 akta-pro list filter-builder "US fintechs founded after 2015"     # -> structured filters
 akta-pro list generate companies --filters '{"location.hq.country":"USA"}' -s firmographic
 ```

@@ -52,7 +52,7 @@ def search(
 ) -> None:
     """Resolve a free-text region to akta.pro UN M49 region codes (free).
 
-    Use the returned `code` values as an `hq_region_codes` filter in `akta-pro list generate`.
+    Use the returned `code` values as an `hq_region_codes` filter in `akta-pro list generate companies`.
     """
     params = {"query": query, "level": level.value if level else None}
     result = fetch(ctx.obj, "/region/search", params)

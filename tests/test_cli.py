@@ -256,7 +256,7 @@ def test_status_fetches_by_request_id():
 
 @respx.mock
 def test_list_generate_requires_query_or_filters():
-    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate"])
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate", "companies"])
     assert res.exit_code == 2
 
 
@@ -265,7 +265,7 @@ def test_list_generate_with_filters():
     route = respx.post(f"{BASE}/list/generate/companies").mock(
         return_value=httpx.Response(200, json={"data": [], "count": 0, "total_count": 0,
                                                "credits_consumed": 0}))
-    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate",
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate", "companies",
                               "--filters", '{"location.hq.country": "USA"}', "--json"])
     assert res.exit_code == 0
     body = json.loads(route.calls.last.request.content)

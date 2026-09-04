@@ -59,8 +59,8 @@ akta-pro logout                   # remove the stored key
 | `akta-pro news signals [filters]` | 0.1 + 0.01/article | anchor with `--company/--primary-company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`/`--publisher`); compact list with `id`s |
 | `akta-pro news detail <id>...` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
 | `akta-pro news types` | free | tag codes for `--type-code`; offline, no key |
-| `akta-pro list generate` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation) or `--filters` (JSON/@file), `-s/--section`, `--sort-by/--sort-order`, `-n/--limit`, `--offset` |
-| `akta-pro list filter-builder <query>` | 2.5 | translate free text into structured `--filters` JSON for `list generate` |
+| `akta-pro list generate companies` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation) or `--filters` (JSON/@file), `-s/--section`, `--sort-by/--sort-order`, `-n/--limit`, `--offset` |
+| `akta-pro list filter-builder <query>` | 2.5 | translate free text into structured `--filters` JSON for `list generate companies` |
 | `akta-pro headcount <company>` | 2.5 | Subscription/Enterprise |
 | `akta-pro traffic <company>` | 1.5 | Subscription/Enterprise |
 | `akta-pro jobs [company]` | 4/10 returned | Subscription/Enterprise; `--job-id` (repeatable) fetches specific jobs without a company |
@@ -97,7 +97,7 @@ akta-pro reviews products canva.com --product-id p_123 -n 50
 akta-pro company add "Solios" solios.co                           # request a missing company
 akta-pro status <request_id>                                      # poll that request
 akta-pro list filter-builder "US fintechs founded after 2015"     # -> structured filters
-akta-pro list generate --filters '{"location.hq.country":"USA"}' -s firmographic
+akta-pro list generate companies --filters '{"location.hq.country":"USA"}' -s firmographic
 ```
 
 ## Output & exit codes

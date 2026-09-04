@@ -13,6 +13,8 @@ from akta_pro_cli.options import JsonOpt, OutOpt
 from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, post
 
 app = typer.Typer(no_args_is_help=True, help="Generate company lists from structured filters or free text.")
+generate_app = typer.Typer(no_args_is_help=True, help="Generate lists (companies, ...).")
+app.add_typer(generate_app, name="generate")
 
 
 def _load_filters(raw: str) -> dict:
@@ -29,8 +31,8 @@ def _load_filters(raw: str) -> dict:
     return parsed
 
 
-@app.command("generate")
-def generate(
+@generate_app.command("companies")
+def generate_companies(
     ctx: typer.Context,
     query: Annotated[str | None, typer.Option("--query", help="Free-text description of the target companies, translated to filters server-side. Mutually exclusive with --filters.")] = None,
     filters: Annotated[str | None, typer.Option("--filters", help="Structured filters as a JSON string or @file.json, keyed by enrichment field path — see `akta-pro list filter-builder`.")] = None,
@@ -77,7 +79,7 @@ def filter_builder(
     """Translate a free-text query into structured filters. 2.5 credits.
 
     Inspect or edit the returned `filters`, then pass them to
-    `akta-pro list generate --filters '<json>'` to skip the translation fee.
+    `akta-pro list generate companies --filters '<json>'` to skip the translation fee.
     """
     result = post(ctx.obj, "/list/filter-builder", {"query": query})
     emit(ctx.obj, result, json_out=json_out, output=output)

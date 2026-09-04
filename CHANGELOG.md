@@ -6,7 +6,7 @@ All notable changes to the Akta CLI are documented here. The format follows
 ## [0.4.0]
 
 ### Added
-- `akta-pro list generate` and `akta-pro list filter-builder` — the List
+- `akta-pro list generate companies` and `akta-pro list filter-builder` — the List
   Generation API: fetch a company list from structured `--filters` or a
   free-text `--query`.
 - `akta-pro company add <name> <website>` and `akta-pro status <request_id>` —

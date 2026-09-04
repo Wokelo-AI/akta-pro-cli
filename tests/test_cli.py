@@ -78,6 +78,21 @@ def test_news_signals_forwards_primary_company():
     assert "company" not in params
 
 
+@respx.mock
+def test_news_signals_group_articles_uses_unique_article_key():
+    """The API names this filter `unique_article`; sending `group_articles`
+    was silently ignored and returned ungrouped results."""
+    route = respx.get(f"{BASE}/news").mock(
+        return_value=httpx.Response(200, json={"total": 0, "count": 0,
+                                               "credits_consumed": 0.1, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "news", "signals",
+                              "--company", "canva.com", "--group-articles", "--json"])
+    assert res.exit_code == 0
+    params = route.calls.last.request.url.params
+    assert params.get("unique_article") == "true"
+    assert "group_articles" not in params
+
+
 # --- core success paths ---
 
 @respx.mock

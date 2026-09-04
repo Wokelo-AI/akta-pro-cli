@@ -122,7 +122,8 @@ def signals(
         "sic_code_list": csv_join(sic_codes),
         "iptc_code_list": csv_join(iptc_codes),
         "iab_code_list": csv_join(iab_codes),
-        "group_articles": True if group_articles else None,
+        # The API names this `unique_article`; `group_articles` was silently ignored.
+        "unique_article": True if group_articles else None,
         "limit": limit,
         "offset": offset,
         "full_text": False,  # list stays compact; bodies via `news detail`

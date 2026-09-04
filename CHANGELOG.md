@@ -18,6 +18,11 @@ All notable changes to the akta.pro CLI are documented here. The format follows
 - `akta-pro news signals --primary-company` — restrict to articles where the
   company is the primary subject.
 
+### Fixed
+- `akta-pro news signals --group-articles` had no effect. It sent a
+  `group_articles` param the API ignores; the API names this filter
+  `unique_article`. The flag now groups near-duplicate articles as documented.
+
 ## [0.3.0]
 
 ### Changed

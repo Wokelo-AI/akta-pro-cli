@@ -25,23 +25,30 @@ The `akta-pro` command depends only on `httpx`, `typer`, `rich`.
 
 ## Authentication
 
-v1 authenticates with an akta.pro API key (`wk_...`), minted at
-<https://playground.akta.pro> (sign up → **API Keys**). Three ways to supply it,
-in precedence order:
+**1. Get a key** — sign up at <https://playground.akta.pro>, then **API Keys** → create one (`wk_...`).
+
+**2. Log in** — stores the key locally so every future command just works:
 
 ```bash
-akta-pro --api-key wk_...  company search Canva     # 1. explicit flag
-export AKTA_PRO_API_KEY=wk_...                       # 2. environment variable
-akta-pro login                                       # 3. stored (prompts, or --api-key)
+akta-pro login                    # paste your key when prompted
+# or: akta-pro login --api-key wk_...   (skip the prompt)
 ```
 
-`akta-pro login` validates the key against a free endpoint and stores it at
+This validates the key against a free endpoint and saves it to
 `~/.config/akta-pro/credentials.json` (mode 0600; `%APPDATA%\akta-pro` on Windows).
 
+**3. Verify**, then use any command:
+
 ```bash
-akta-pro login --api-key wk_...   # store without the prompt
-akta-pro whoami                   # show the active key (masked), its source, and validate
-akta-pro logout                   # remove the stored key
+akta-pro whoami                   # confirms the key is stored and valid
+akta-pro company search Canva
+```
+
+`akta-pro logout` removes the stored key.
+
+```bash
+akta-pro --api-key wk_...  company search Canva     # explicit flag
+export AKTA_PRO_API_KEY=wk_...                       # environment variable
 ```
 
 ## Commands

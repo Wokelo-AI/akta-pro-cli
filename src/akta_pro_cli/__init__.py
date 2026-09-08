@@ -5,4 +5,4 @@ console command; a sibling of the akta.pro MCP server over the same `/api/v1`
 endpoints, with no MCP-server code.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

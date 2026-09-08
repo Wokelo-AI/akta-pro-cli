@@ -31,5 +31,5 @@ def account(ctx: typer.Context, json_out: JsonOpt = False, output: OutOpt = None
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_account_table)
 
 
-def register(app: typer.Typer) -> None:
-    app.command("account")(account)
+def register(app: typer.Typer, panel: str | None = None) -> None:
+    app.command("account", rich_help_panel=panel)(account)

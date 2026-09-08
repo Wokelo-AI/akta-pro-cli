@@ -46,14 +46,15 @@ def search(
     query: Annotated[str, typer.Argument(help="Free-text industry or topic, e.g. 'warehouse automation'.")],
     level: Annotated[
         list[Level] | None,
-        typer.Option("--level", help="Taxonomy depth(s) to search: l1 (broadest) to l4 (most granular), or 'all' (repeatable). Default l4."),
+        typer.Option("--level", help="Taxonomy depth(s) to search: l1 (broadest) to l4 (most granular), or 'all' (repeatable). Default l4 — the narrowest, so a broadly-worded query comes back as very specific tags. Pass --level all when you don't yet know how broad the sector is."),
     ] = None,
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
     """Resolve a free-text industry to akta.pro industry codes (free).
 
-    Use the returned `code` values as `--industry` in `akta-pro news`.
+    Use the returned `code` values as `--industry` in `akta-pro news signals`,
+    or in `akta-pro list generate companies --filters` under `industry.industry`.
     """
     params = {"query": query, "level": csv_join([lv.value for lv in level] if level else None)}
     result = fetch(ctx.obj, "/industry/search", params)

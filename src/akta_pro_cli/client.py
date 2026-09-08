@@ -15,6 +15,8 @@ from . import __version__
 
 DEFAULT_BASE_URL = "https://api.akta.pro/api/v1"
 
+DEFAULT_TIMEOUT = 120.0
+
 # Sent on every request so the backend can distinguish (and version-track) CLI
 # traffic. Mirrors the MCP's `X-Client-Source: AKTA-MCP`.
 CLIENT_SOURCE = f"AKTA-PRO-CLI/{__version__}"
@@ -63,7 +65,7 @@ def _clean(params: dict | None) -> dict:
 class AktaClient:
     """Thin synchronous httpx wrapper that sends `x-api-key` on every request."""
 
-    def __init__(self, base_url: str, api_key: str, timeout: float = 30.0):
+    def __init__(self, base_url: str, api_key: str, timeout: float = DEFAULT_TIMEOUT):
         self._api_key = api_key
         # follow_redirects: several akta.pro routes are declared with a trailing slash,
         # so a slashless path 307-redirects to the canonical one. The redirect is

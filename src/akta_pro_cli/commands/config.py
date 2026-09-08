@@ -50,5 +50,5 @@ def base_url(
     out.print(f"[green]✓[/] base url set → {url}")
 
 
-def register(app: typer.Typer) -> None:
-    app.add_typer(config_app, name="config")
+def register(app: typer.Typer, panel: str | None = None) -> None:
+    app.add_typer(config_app, name="config", rich_help_panel=panel)

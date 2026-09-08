@@ -97,7 +97,7 @@ pipx uninstall akta-pro-cli
 |---|---|
 | `akta-pro: command not found` | Run `pipx ensurepath`, then restart your shell. |
 | Exit code `3` on a command | No/invalid key or plan gating. Check `akta-pro whoami` and `akta-pro account`. |
-| A call times out (exit `5`) | Some endpoints can be slow on dev — raise it: `akta-pro --timeout 120 <command>`. |
+| A call times out (exit `5`) | Some endpoints can be slow — raise it: `akta-pro --timeout 120 <command>`. |
 | Need all options | `akta-pro --help`, `akta-pro <command> --help`. |
 
 ## Command reference

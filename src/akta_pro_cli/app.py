@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 
 from akta_pro_cli import __version__
-from akta_pro_cli.client import DEFAULT_BASE_URL
+from akta_pro_cli.client import DEFAULT_BASE_URL, DEFAULT_TIMEOUT
 from akta_pro_cli.commands import (
     account,
     alternative,
@@ -73,7 +73,7 @@ def main(
     timeout: Annotated[
         float,
         typer.Option("--timeout", help="HTTP request timeout in seconds."),
-    ] = 30.0,
+    ] = DEFAULT_TIMEOUT,
     version: Annotated[
         bool | None,
         typer.Option("--version", callback=_version_callback, is_eager=True, help="Show version and exit."),
@@ -83,18 +83,23 @@ def main(
     ctx.obj = AppContext(api_key=api_key, base_url=base_url, quiet=quiet, timeout=timeout)
 
 
-# Command groups
-app.add_typer(company.app, name="company")    # search, data, concise, add
-app.add_typer(industry.app, name="industry")
-app.add_typer(region.app, name="region")
-app.add_typer(news.app, name="news")          # signals, detail, types
-app.add_typer(alternative.reviews_app, name="reviews")
-app.add_typer(list_gen.app, name="list")      # generate, filters, filter-options, filter-builder
+PANEL_SETUP = "Setup & account"
+PANEL_DATA = "Company & news data"
+PANEL_ALT = "Alternative signals (Subscription/Enterprise)"
+PANEL_LISTS = "List generation"
 
-# Top-level commands
-auth.register(app)          # login, logout, whoami
-account.register(app)       # account
-config.register(app)        # config show / base-url
-update.register(app)        # update (self-update / check)
-status.register(app)        # status <request_id>
-alternative.register(app)   # headcount, traffic, jobs, posts
+auth.register(app, PANEL_SETUP)     # login, logout, whoami
+account.register(app, PANEL_SETUP)  # account
+update.register(app, PANEL_SETUP)   # update (self-update / check)
+config.register(app, PANEL_SETUP)   # config show / base-url
+
+status.register(app, PANEL_DATA)    # status <request_id> — polls `company add`
+app.add_typer(company.app, name="company", rich_help_panel=PANEL_DATA)    # search, data, concise, add
+app.add_typer(industry.app, name="industry", rich_help_panel=PANEL_DATA)
+app.add_typer(region.app, name="region", rich_help_panel=PANEL_DATA)
+app.add_typer(news.app, name="news", rich_help_panel=PANEL_DATA)          # signals, detail, types
+
+alternative.register(app, PANEL_ALT)  # headcount, traffic, jobs, posts
+app.add_typer(alternative.reviews_app, name="reviews", rich_help_panel=PANEL_ALT)
+
+app.add_typer(list_gen.app, name="list", rich_help_panel=PANEL_LISTS)     # generate, filters, filter-options, filter-builder

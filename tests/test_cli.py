@@ -9,6 +9,7 @@ the HTTP layer mocked by respx. Run just these with:
 """
 
 import json
+import sys
 
 import httpx
 import respx
@@ -452,10 +453,47 @@ def test_update_up_to_date(tmp_path, monkeypatch):
 
 def test_update_available_check_only(tmp_path, monkeypatch):
     monkeypatch.setattr("akta_pro_cli.update.latest_version", lambda timeout=5.0: "99.0.0")
+    monkeypatch.setattr("akta_pro_cli.update.install_method", lambda *a, **k: "pipx")
+    monkeypatch.setattr("akta_pro_cli.update.upgrade_command", lambda *a, **k: ["pipx", "upgrade", "akta-pro-cli"])
     res = runner.invoke(app, ["update", "--check"], env={"XDG_CONFIG_HOME": str(tmp_path)})
     assert res.exit_code == 0
     assert "Update available" in res.stdout
-    assert "pipx upgrade" in res.stdout  # shows the command, does not run it
+    assert "pipx upgrade akta-pro-cli" in res.stdout  # shows the command, does not run it
+
+
+def test_update_detects_install_method(monkeypatch):
+    monkeypatch.delenv("UV_TOOL_DIR", raising=False)
+    monkeypatch.delenv("PIPX_HOME", raising=False)
+    site = "/lib/python3.11/site-packages/akta_pro_cli"
+
+    def method(prefix):
+        return _upd.install_method(prefix, prefix + site)
+
+    assert method("/home/u/.local/share/uv/tools/akta-pro-cli") == "uv"
+    assert method("/home/u/.local/pipx/venvs/akta-pro-cli") == "pipx"
+    assert method("/home/u/.local/share/pipx/venvs/akta-pro-cli") == "pipx"
+    assert method("/home/u/project/.venv") == "pip"
+    # An editable checkout lives outside site-packages: no installer to run.
+    assert _upd.install_method("/home/u/project/.venv", "/home/u/project/src/akta_pro_cli") == "source"
+
+
+def test_upgrade_command_per_install_method(monkeypatch):
+    monkeypatch.setattr(_upd, "install_method", lambda *a, **k: "uv")
+    assert _upd.upgrade_command() == ["uv", "tool", "upgrade", "akta-pro-cli"]
+    monkeypatch.setattr(_upd, "install_method", lambda *a, **k: "pipx")
+    assert _upd.upgrade_command() == ["pipx", "upgrade", "akta-pro-cli"]
+    monkeypatch.setattr(_upd, "install_method", lambda *a, **k: "pip")
+    assert _upd.upgrade_command() == [sys.executable, "-m", "pip", "install", "--upgrade", "akta-pro-cli"]
+    monkeypatch.setattr(_upd, "install_method", lambda *a, **k: "source")
+    assert _upd.upgrade_command() is None
+
+
+def test_update_source_checkout_refuses(tmp_path, monkeypatch):
+    monkeypatch.setattr("akta_pro_cli.update.latest_version", lambda timeout=5.0: "99.0.0")
+    monkeypatch.setattr("akta_pro_cli.update.upgrade_command", lambda *a, **k: None)
+    res = runner.invoke(app, ["update", "--yes"], env={"XDG_CONFIG_HOME": str(tmp_path)})
+    assert res.exit_code == 4
+    assert "source checkout" in res.stderr
 
 
 def test_update_unreachable_exits_4(tmp_path, monkeypatch):

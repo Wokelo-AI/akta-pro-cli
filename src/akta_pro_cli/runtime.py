@@ -20,7 +20,7 @@ import httpx
 import typer
 from rich.markdown import Markdown
 
-from akta_pro_cli.client import DEFAULT_BASE_URL, AktaAPIError, AktaClient
+from akta_pro_cli.client import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, AktaAPIError, AktaClient
 from akta_pro_cli.config import stored_api_key, stored_base_url
 from akta_pro_cli.console import err, out
 
@@ -36,7 +36,7 @@ class AppContext:
     api_key: str | None
     base_url: str | None  # from --base-url / AKTA_PRO_API_BASE_URL; None if unset
     quiet: bool
-    timeout: float = 30.0
+    timeout: float = DEFAULT_TIMEOUT
 
 
 def resolve_base_url(ctx: AppContext) -> str:

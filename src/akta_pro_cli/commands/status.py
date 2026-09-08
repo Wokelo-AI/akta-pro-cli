@@ -21,5 +21,5 @@ def status(
     emit(ctx.obj, result, json_out=json_out, output=output)
 
 
-def register(app: typer.Typer) -> None:
-    app.command("status")(status)
+def register(app: typer.Typer, panel: str | None = None) -> None:
+    app.command("status", rich_help_panel=panel)(status)

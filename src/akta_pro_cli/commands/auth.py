@@ -117,7 +117,7 @@ def whoami(ctx: typer.Context) -> None:
         raise typer.Exit(code=EXIT_AUTH)
 
 
-def register(app: typer.Typer) -> None:
-    app.command("login")(login)
-    app.command("logout")(logout)
-    app.command("whoami")(whoami)
+def register(app: typer.Typer, panel: str | None = None) -> None:
+    app.command("login", rich_help_panel=panel)(login)
+    app.command("logout", rich_help_panel=panel)(logout)
+    app.command("whoami", rich_help_panel=panel)(whoami)

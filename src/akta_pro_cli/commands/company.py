@@ -41,6 +41,17 @@ class Section(str, Enum):
 # Sections the akta.pro backend gates to Enterprise plans (mirrors the MCP tool).
 ENTERPRISE_SECTIONS = {"funding_detail", "mna_and_investment"}
 
+# The per-section price list, shared verbatim with `list generate companies`
+# (which bills these per company) so both help screens can price a call.
+SECTION_CREDITS = """  business_model       2     industry             1
+  company_assessment   2     location             0.5
+  company_hierarchy    0.5   management_profile   1
+  customer_profile     1     mna_and_investment*  5
+  digital_presence     0.5   product_offering     2
+  financial_estimate   0.5   strategic_signal     1.5
+  firmographic         2     technology           2
+  funding_detail*      3     trust_signal         0.5"""
+
 
 def _search_table(result: object) -> Table | None:
     rows = result.get("data") if isinstance(result, dict) else None
@@ -76,13 +87,36 @@ def search(
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_search_table)
 
 
-@app.command("data")
+@app.command(
+    "data",
+    help=f"""Enrich a company with the chosen sections.
+
+Returns structured JSON by default (from `/company/enrichment`); pass
+`--markdown` for the server-rendered Markdown variant
+(`/company/enrichment/markdown`). Both build — and bill — identical sections.
+
+Sections and their credit cost — these names are the `-s/--section` values:
+
+{SECTION_CREDITS}
+
+* Enterprise-only: auto-skipped (not an error) for non-enterprise callers,
+with a note listing any dropped.
+
+Example — two sections, rendered as Markdown (4.5 credits):
+
+  akta-pro company data canva.com -s firmographic -s business_model --markdown""",
+)
 def data(
     ctx: typer.Context,
     company: Annotated[str, typer.Argument(help="Company website or akta.pro UUID.")],
     sections: Annotated[
         list[Section] | None,
-        typer.Option("-s", "--section", help="Section(s) to fetch (repeatable). Required — there is no 'all'."),
+        typer.Option(
+            "-s",
+            "--section",
+            metavar="<section>",
+            help="Section(s) to fetch, by name from the list above (repeatable). Required — there is no 'all'.",
+        ),
     ] = None,
     markdown: Annotated[
         bool,
@@ -94,21 +128,8 @@ def data(
     ] = False,
     output: OutOpt = None,
 ) -> None:
-    """Enrich a company with the chosen sections.
-
-    Returns structured JSON by default (from `/company/enrichment`); pass
-    `--markdown` for the server-rendered Markdown variant
-    (`/company/enrichment/markdown`). Both build — and bill — identical sections.
-
-    Credits per section: firmographic 2, business_model 2, company_assessment 2,
-    trust_signal 0.5, company_hierarchy 0.5, digital_presence 0.5,
-    financial_estimate 0.5, location 0.5, management_profile 1,
-    product_offering 2, strategic_signal 1.5, customer_profile 1, industry 1,
-    technology 2, funding_detail 3 (enterprise), mna_and_investment 5 (enterprise).
-
-    The two enterprise-only sections are auto-skipped (not an error) for
-    non-enterprise callers; a note lists any dropped.
-    """
+    """Enrich a company with the chosen sections. User-facing help lives in the
+    decorator's `help=` so it can interpolate SECTION_CREDITS."""
     if not sections:
         err.print(
             "[red]Choose at least one --section.[/] Options: "

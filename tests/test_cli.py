@@ -475,6 +475,11 @@ def test_update_detects_install_method(monkeypatch):
     assert method("/home/u/project/.venv") == "pip"
     # An editable checkout lives outside site-packages: no installer to run.
     assert _upd.install_method("/home/u/project/.venv", "/home/u/project/src/akta_pro_cli") == "source"
+    # A directory merely named "uv"/"pipx" is not a tool install: the marker
+    # pair must sit directly above the env root.
+    assert method("/home/u/code/pipx/.venv") == "pip"
+    assert method("/home/uv/tools/proj/.venv") == "pip"
+    assert method("/home/u/my-pipx-notes/.venv") == "pip"
 
 
 def test_upgrade_command_per_install_method(monkeypatch):

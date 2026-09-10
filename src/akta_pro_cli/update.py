@@ -56,10 +56,13 @@ def install_method(prefix: str | None = None, package_dir: str | None = None) ->
         except (OSError, ValueError):
             pass
 
-    if "tools" in parts and "uv" in parts[: parts.index("tools")]:
-        return "uv"
-    if "pipx" in parts:
-        return "pipx"
+    for i in range(len(parts) - 2):
+        if parts[i + 2] != parts[-1]:
+            continue
+        if parts[i : i + 2] == ("uv", "tools"):
+            return "uv"
+        if parts[i : i + 2] == ("pipx", "venvs"):
+            return "pipx"
     return "pip"
 
 

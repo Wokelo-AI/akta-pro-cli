@@ -23,6 +23,12 @@ All notable changes to the akta.pro CLI are documented here. The format follows
   full per-section credit table, so a call can be priced before it runs.
 - README documents authentication as get a key, log in, verify.
 
+### Fixed
+- `company data` help priced two sections at 4.5 credits. The real cost is 4.
+- `akta-pro update` read a directory named `uv` or `pipx` anywhere in the path
+  as a tool install. Detection now requires the real layout, `uv/tools/<pkg>`
+  or `pipx/venvs/<pkg>`, directly above the environment root.
+
 ## [0.4.0]
 
 ### Added

@@ -3,6 +3,26 @@
 All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.5.0]
+
+### Changed
+- Default HTTP timeout raised from 30 to 120 seconds. Some endpoints, notably
+  `list generate companies` with enrichment sections, need longer than 30s.
+  Override it per call with `--timeout`.
+- `akta-pro update` now upgrades with whichever installer owns the running copy
+  — `uv tool upgrade`, `pipx upgrade`, or `pip install --upgrade` — instead of
+  always calling pipx. The installer is detected from where the package sits on
+  disk; `UV_TOOL_DIR` and `PIPX_HOME` take precedence over the default layouts.
+  `--check` prints the command instead of running it.
+- `akta-pro update` refuses to run an installer against a source or editable
+  checkout, where `pip install --upgrade` would replace the working tree with a
+  PyPI build. Update those with git.
+- `akta-pro --help` groups commands into panels: Setup & account, Company & news
+  data, Alternative signals, and List generation.
+- Help text for `company data` and `list generate companies` now carries the
+  full per-section credit table, so a call can be priced before it runs.
+- README documents authentication as get a key, log in, verify.
+
 ## [0.4.0]
 
 ### Added

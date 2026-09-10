@@ -102,7 +102,7 @@ Sections and their credit cost — these names are the `-s/--section` values:
 * Enterprise-only: auto-skipped (not an error) for non-enterprise callers,
 with a note listing any dropped.
 
-Example — two sections, rendered as Markdown (4.5 credits):
+Example — two sections, rendered as Markdown (4 credits):
 
   akta-pro company data canva.com -s firmographic -s business_model --markdown""",
 )

@@ -69,3 +69,8 @@ def stored_api_key() -> str | None:
 
 def stored_base_url() -> str | None:
     return load_credentials().get("base_url")
+
+
+def mask_key(key: str) -> str:
+    """Display form of an API key: first 5 and last 4 characters only."""
+    return f"{key[:5]}…{key[-4:]}" if len(key) > 12 else "…"

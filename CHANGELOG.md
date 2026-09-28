@@ -3,6 +3,27 @@
 All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.6.0]
+
+### Added
+- `akta-pro connect claude-code` sets akta.pro up in Claude Code in one step.
+  It installs the akta-pro skill to `~/.claude/skills/akta-pro/` and registers
+  the akta.pro MCP server at user scope with the key from `akta-pro login`.
+  Options: `--api-key`, `--oauth` (no key; sign in through Claude Code),
+  `--skill-only`, `--mcp-only`, `--force`, `--launch`, and `--json`. Running it
+  again leaves an up-to-date setup unchanged. The key is checked against
+  akta.pro before it is registered; a rejected key exits with code 3.
+- `connect` logs the CLI in when it isn't already. With no stored key it asks
+  for one in a terminal (or takes `--api-key`), checks it, and saves it as
+  `akta-pro login` would. It never replaces an existing login, and never writes
+  a key from `AKTA_PRO_API_KEY` to disk.
+- Setup is one line with nothing installed first:
+  `pipx run --spec akta-pro-cli akta-pro connect claude-code` or
+  `uvx --from akta-pro-cli akta-pro connect claude-code`.
+- `akta-pro connect status` shows the installed skill version and whether the
+  MCP server is registered. `akta-pro disconnect claude-code` removes both, and
+  only deletes a skill folder that `connect` installed.
+
 ## [0.5.0]
 
 ### Changed

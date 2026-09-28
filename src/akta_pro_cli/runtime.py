@@ -62,6 +62,22 @@ def resolve_api_key(ctx: AppContext) -> str:
     return key
 
 
+def validate_key(base_url: str, key: str) -> tuple[bool, str]:
+    """Probe a free endpoint to check the key. Returns (ok, message)."""
+    client = AktaClient(base_url, key)
+    try:
+        client.get("/company/search", params={"query": "akta"})
+        return True, "key is valid"
+    except AktaAPIError as exc:
+        if exc.status_code in (401, 403):
+            return False, f"key rejected ({exc.status_code})"
+        return True, f"could not fully verify (error {exc.status_code}), key stored anyway"
+    except httpx.HTTPError as exc:
+        return True, f"could not reach akta.pro to verify ({exc})"
+    finally:
+        client.close()
+
+
 def probe_is_enterprise(ctx: AppContext) -> bool:
     """Best-effort Enterprise-tier check via /mcp/account (free, 0 credits).
 

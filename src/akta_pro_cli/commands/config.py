@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 
 from akta_pro_cli.client import DEFAULT_BASE_URL
-from akta_pro_cli.config import credentials_path, load_credentials, save_credentials
+from akta_pro_cli.config import credentials_path, load_credentials, mask_key, save_credentials
 from akta_pro_cli.console import err, out
 from akta_pro_cli.runtime import EXIT_BAD_INPUT
 
@@ -15,9 +15,7 @@ config_app = typer.Typer(no_args_is_help=True, help="View or change stored setti
 
 
 def _mask(key: str | None) -> str:
-    if not key:
-        return "(not set)"
-    return f"{key[:5]}…{key[-4:]}" if len(key) > 12 else "…"
+    return mask_key(key) if key else "(not set)"
 
 
 @config_app.command("show")

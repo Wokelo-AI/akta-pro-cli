@@ -14,6 +14,7 @@ from akta_pro_cli.commands import (
     auth,
     company,
     config,
+    connect,
     industry,
     list_gen,
     news,
@@ -92,6 +93,7 @@ auth.register(app, PANEL_SETUP)     # login, logout, whoami
 account.register(app, PANEL_SETUP)  # account
 update.register(app, PANEL_SETUP)   # update (self-update / check)
 config.register(app, PANEL_SETUP)   # config show / base-url
+connect.register(app, PANEL_SETUP)  # connect / disconnect <agent>, connect status
 
 status.register(app, PANEL_DATA)    # status <request_id> — polls `company add`
 app.add_typer(company.app, name="company", rich_help_panel=PANEL_DATA)    # search, data, concise, add

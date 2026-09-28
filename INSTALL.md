@@ -75,6 +75,22 @@ akta-pro account                   # plan tier + credit balance (free)
 akta-pro company search "Canva"    # free
 ```
 
+## Connect to Claude Code (optional)
+
+No install needed. This asks for your API key, then installs the akta-pro skill
+and registers the MCP server:
+
+```bash
+pipx run --spec akta-pro-cli akta-pro connect claude-code
+# or: uvx --from akta-pro-cli akta-pro connect claude-code
+```
+
+With the CLI installed, the same thing is `akta-pro connect claude-code`, and
+`akta-pro connect status` shows what's set up.
+
+Needs the Claude Code CLI (`claude`) on your PATH for the MCP step. See the
+[README](README.md#connect-to-claude-code) for flags.
+
 ## Update
 
 ```bash
@@ -88,6 +104,7 @@ Released versions are listed on [PyPI](https://pypi.org/project/akta-pro-cli/#hi
 ## Uninstall
 
 ```bash
+akta-pro disconnect claude-code    # if you ran `connect`: removes the skill + MCP server
 pipx uninstall akta-pro-cli
 ```
 
@@ -98,6 +115,10 @@ pipx uninstall akta-pro-cli
 | `akta-pro: command not found` | Run `pipx ensurepath`, then restart your shell. |
 | Exit code `3` on a command | No/invalid key or plan gating. Check `akta-pro whoami` and `akta-pro account`. |
 | A call times out (exit `5`) | Some endpoints can be slow — raise it: `akta-pro --timeout 120 <command>`. |
+| `pipx run` says "requires a different Python" | pipx is using Python < 3.11. Run `pipx run --python python3.12 --spec akta-pro-cli akta-pro connect claude-code`. |
+| `connect` says `claude` not found | Install Claude Code, then `akta-pro connect claude-code --mcp-only`. |
+| Claude Code doesn't see the skill | Restart open Claude Code sessions (needed the first time `~/.claude/skills` is created). |
+| Changed your key | `akta-pro login --api-key wk_...`, then `akta-pro connect claude-code --force`. |
 | Need all options | `akta-pro --help`, `akta-pro <command> --help`. |
 
 ## Command reference

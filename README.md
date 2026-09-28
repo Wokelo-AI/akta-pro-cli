@@ -51,10 +51,66 @@ akta-pro --api-key wk_...  company search Canva     # explicit flag
 export AKTA_PRO_API_KEY=wk_...                       # environment variable
 ```
 
+## Connect to Claude Code
+
+One command sets akta.pro up inside [Claude Code](https://claude.com/claude-code),
+with nothing installed first:
+
+```bash
+pipx run --spec akta-pro-cli akta-pro connect claude-code
+# or, with uv:
+uvx --from akta-pro-cli akta-pro connect claude-code
+```
+
+It asks for your API key (get one at
+<https://playground.akta.pro/dashboard/manage/api-keys>), or skip the prompt with
+`--api-key wk_...`. If the CLI is already installed and logged in, run
+`akta-pro connect claude-code` and it uses the stored key.
+
+It does two things:
+
+1. **Installs the akta-pro skill** to `~/.claude/skills/akta-pro/`. The skill
+   tells Claude when to use akta.pro and how to keep credit use low. It's downloaded
+   from akta.pro's storage, so you always get the latest version.
+2. **Registers the akta.pro MCP server** (`https://mcp.akta.pro/mcp`) with your
+   key, the same as running
+   `claude mcp add --transport http --scope user akta-pro https://mcp.akta.pro/mcp --header "x-api-key: wk_..."`.
+
+Both go to Claude Code's user scope, so they work in every project and the key
+stays in `~/.claude.json` on your machine, never in a repo. If the CLI wasn't
+logged in yet, the key you entered is saved for it too, as `akta-pro login`
+would. An existing login is never changed, and a key from `AKTA_PRO_API_KEY`
+isn't written to disk. Then open Claude
+Code and ask, for example, *"Tell me about Stripe, recent news and headcount."*
+
+| Flag | Effect |
+|---|---|
+| `--api-key wk_...` | Use this key instead of the stored one or the prompt |
+| `--oauth` | Register without a key; Claude Code asks you to sign in on first use |
+| `--skill-only` / `--mcp-only` | Do only one of the two steps |
+| `--force` | Reinstall the skill and replace an existing `akta-pro` MCP entry |
+| `--launch` | Start `claude` when done |
+| `--json` | Print a structured result for scripts |
+
+If `claude` isn't on your PATH, the skill is still installed and the command
+prints the `claude mcp add` line to run once Claude Code is installed. Running
+`connect` again is safe. It updates the skill only if a newer one has been
+published, and leaves an existing server alone unless you pass `--force`.
+
+```bash
+akta-pro connect status              # skill version and MCP registration
+akta-pro disconnect claude-code      # remove both
+```
+
+`disconnect` only deletes a skill folder that `connect` installed. If you
+created `~/.claude/skills/akta-pro/` by hand, it is left alone.
+
 ## Commands
 
 | Command | Cost | Notes |
 |---|---|---|
+| `akta-pro connect claude-code` | free | install the skill + register the MCP server in Claude Code ([above](#connect-to-claude-code)) |
+| `akta-pro connect status` / `disconnect claude-code` | free | show / remove that setup |
 | `akta-pro account` | free | your tier + credit balance |
 | `akta-pro company search <query>` | free | run first; returns `uuid` |
 | `akta-pro company data <company> -s ...` | per section | requires ≥1 `--section`; `--markdown` for a rendered report |

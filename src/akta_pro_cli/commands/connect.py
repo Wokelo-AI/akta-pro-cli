@@ -234,10 +234,10 @@ def status(json_out: JsonOpt = False) -> None:
             out.print(f"  [yellow]![/] Skill at {path}/ wasn't installed by akta-pro", soft_wrap=True)
         else:
             out.print(f"  [dim]•[/] Skill not installed ({path}/)", soft_wrap=True)
-        if not mcp["claude_found"]:
-            out.print("  [yellow]![/] MCP: agent CLI not found on PATH")
-        elif mcp.get("error"):
+        if mcp.get("error"):
             out.print(f"  [red]✗[/] MCP: {escape(mcp['error'])}")
+        elif mcp["registered"] is None:
+            out.print("  [yellow]![/] MCP: agent CLI not found on PATH")
         elif mcp["registered"]:
             where = f" — {mcp['scope']}" if mcp["scope"] else ""
             out.print(f"  [green]✓[/] MCP server '{mcp['name']}' registered{escape(where)}", soft_wrap=True)

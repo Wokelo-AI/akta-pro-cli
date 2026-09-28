@@ -21,7 +21,7 @@ from typer.testing import CliRunner
 
 from akta_pro_cli.app import app
 from akta_pro_cli.config import load_credentials, save_credentials
-from akta_pro_cli.connectors import claude_code
+from akta_pro_cli.connectors import claude_code, codex
 from akta_pro_cli.connectors import skill as skill_mod
 from akta_pro_cli.connectors.skill import SkillError, check_url, parse_frontmatter
 
@@ -73,6 +73,7 @@ def home(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / ".config"))
     monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("CODEX_HOME", raising=False)
     monkeypatch.delenv("AKTA_PRO_API_KEY", raising=False)
     monkeypatch.delenv(skill_mod.SKILL_URL_ENV, raising=False)
     return tmp_path
@@ -108,6 +109,10 @@ def invoke(*args, **kw):
 
 def skill_dir(home):
     return home / ".claude" / "skills" / "akta-pro"
+
+
+def status_entry(res, target):
+    return next(e for e in json.loads(res.stdout) if e["target"] == target)
 
 
 def marker(home):
@@ -209,9 +214,9 @@ def test_conflicting_flags_exit_2(home, claude):
 
 
 def test_unknown_target_lists_supported(home):
-    res = invoke("connect", "codex")
+    res = invoke("connect", "cursor")
     assert res.exit_code == 2
-    assert "Supported: claude-code" in res.output
+    assert "Supported: claude-code, codex" in res.output
 
 
 def test_claude_config_dir_is_respected(home, http, claude, monkeypatch):
@@ -531,7 +536,7 @@ def test_status_json(home, http, claude):
     assert invoke("connect", "claude-code", "--oauth").exit_code == 0
     res = invoke("connect", "status", "--json")
     assert res.exit_code == 0, res.output
-    [entry] = json.loads(res.stdout)
+    entry = status_entry(res, "claude-code")
     assert entry["target"] == "claude-code"
     assert entry["skill"]["installed"] and entry["skill"]["source"] == SKILL_URL
     assert entry["skill"]["label"] == f"@{hashlib.sha256(SKILL_MD).hexdigest()[:7]}"
@@ -541,7 +546,7 @@ def test_status_json(home, http, claude):
 def test_status_without_claude(home, monkeypatch):
     monkeypatch.setattr(claude_code.shutil, "which", lambda name: None)
     res = invoke("connect", "status", "--json")
-    [entry] = json.loads(res.stdout)
+    entry = status_entry(res, "claude-code")
     assert entry["skill"]["installed"] is False
     assert entry["mcp"]["claude_found"] is False and entry["mcp"]["registered"] is None
 
@@ -562,3 +567,140 @@ def test_parse_frontmatter_requires_block():
         parse_frontmatter("# no frontmatter")
     with pytest.raises(SkillError):
         parse_frontmatter("---\nname: x\n")
+
+
+# --- codex -------------------------------------------------------------------
+
+@pytest.fixture
+def codex_cli(monkeypatch):
+    monkeypatch.setattr(codex.shutil, "which", lambda name: "/usr/local/bin/codex")
+
+
+def codex_skill(home):
+    return home / ".agents" / "skills" / "akta-pro"
+
+
+def codex_config(home):
+    return home / ".codex" / "config.toml"
+
+
+def codex_servers(home):
+    import tomllib
+    return tomllib.loads(codex_config(home).read_text()).get("mcp_servers", {})
+
+
+EXISTING_CODEX = """model = "gpt-5"
+
+# my servers
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+[profiles.fast]
+model = "gpt-5-mini"
+"""
+
+
+def test_codex_connect_installs_skill_and_writes_config(home, codex_cli, key_ok):
+    save_credentials({"api_key": KEY})
+    res = invoke("connect", "codex")
+    assert res.exit_code == 0, res.output
+    assert (codex_skill(home) / "SKILL.md").read_bytes() == SKILL_MD
+    assert codex_servers(home)["akta-pro"] == {"url": "https://mcp.akta.pro/mcp",
+                                               "http_headers": {"x-api-key": KEY}}
+    assert stat.S_IMODE(codex_config(home).stat().st_mode) == 0o600
+    assert "wk_li…9876" in res.output and "Open Codex" in res.output
+
+
+def test_codex_keeps_the_rest_of_the_config(home, codex_cli, key_ok):
+    codex_config(home).parent.mkdir()
+    codex_config(home).write_text(EXISTING_CODEX)
+    assert invoke("connect", "codex", "--api-key", KEY).exit_code == 0
+    text = codex_config(home).read_text()
+    assert text.startswith(EXISTING_CODEX.rstrip("\n"))
+    assert "# my servers" in text and set(codex_servers(home)) == {"context7", "akta-pro"}
+
+
+def test_codex_existing_entry_skipped_then_force_replaces(home, codex_cli, key_ok):
+    assert invoke("connect", "codex", "--oauth").exit_code == 0
+    res = invoke("connect", "codex", "--api-key", KEY)
+    assert res.exit_code == 0 and "--force" in res.output
+    assert "http_headers" not in codex_servers(home)["akta-pro"]
+    assert invoke("connect", "codex", "--api-key", KEY, "--force").exit_code == 0
+    assert codex_servers(home)["akta-pro"]["http_headers"] == {"x-api-key": KEY}
+    assert codex_config(home).read_text().count("[mcp_servers.akta-pro]") == 1
+
+
+def test_codex_force_replaces_entry_with_subtables(home, codex_cli, key_ok):
+    codex_config(home).parent.mkdir()
+    codex_config(home).write_text(
+        '[mcp_servers."akta-pro"]\nurl = "https://old.example/mcp"\n\n'
+        '[mcp_servers."akta-pro".tools.company_data]\napproval_mode = "approve"\n\n' + EXISTING_CODEX
+    )
+    assert invoke("connect", "codex", "--api-key", KEY, "--force").exit_code == 0
+    servers = codex_servers(home)
+    assert servers["akta-pro"]["url"] == "https://mcp.akta.pro/mcp" and "tools" not in servers["akta-pro"]
+    assert "context7" in servers
+
+
+def test_codex_oauth_writes_url_only_and_says_how_to_sign_in(home, http, codex_cli):
+    res = invoke("connect", "codex", "--oauth")
+    assert res.exit_code == 0, res.output
+    assert codex_servers(home)["akta-pro"] == {"url": "https://mcp.akta.pro/mcp"}
+    assert "codex mcp login akta-pro" in res.output
+
+
+def test_codex_home_is_respected(home, http, codex_cli, monkeypatch):
+    monkeypatch.setenv("CODEX_HOME", str(home / "alt"))
+    assert invoke("connect", "codex", "--oauth").exit_code == 0
+    assert (home / "alt" / "config.toml").is_file() and not codex_config(home).exists()
+
+
+def test_codex_missing_cli_still_configures_with_note(home, key_ok, monkeypatch):
+    monkeypatch.setattr(codex.shutil, "which", lambda name: None)
+    res = invoke("connect", "codex", "--api-key", KEY)
+    assert res.exit_code == 0, res.output
+    assert "akta-pro" in codex_servers(home) and "not found on PATH" in res.output
+
+
+def test_codex_invalid_toml_is_left_alone(home, http, codex_cli):
+    codex_config(home).parent.mkdir()
+    codex_config(home).write_text("this is = = not toml\n")
+    res = invoke("connect", "codex", "--oauth")
+    assert res.exit_code == 4 and "isn't valid TOML" in res.output
+    assert codex_config(home).read_text() == "this is = = not toml\n"
+
+
+def test_codex_unsupported_form_is_refused(home, http, codex_cli):
+    original = 'mcp_servers = { "akta-pro" = { url = "https://old.example/mcp" } }\n'
+    codex_config(home).parent.mkdir()
+    codex_config(home).write_text(original)
+    res = invoke("connect", "codex", "--oauth", "--force")
+    assert res.exit_code == 4 and "by hand" in res.output
+    assert codex_config(home).read_text() == original
+
+
+def test_codex_disconnect_removes_only_our_entry(home, http, codex_cli):
+    codex_config(home).parent.mkdir()
+    codex_config(home).write_text(EXISTING_CODEX)
+    assert invoke("connect", "codex", "--oauth").exit_code == 0
+    res = invoke("disconnect", "codex")
+    assert res.exit_code == 0, res.output
+    assert not codex_skill(home).exists()
+    assert set(codex_servers(home)) == {"context7"}
+    assert "not registered" in invoke("disconnect", "codex").output
+
+
+def test_codex_status_json(home, http, codex_cli):
+    assert invoke("connect", "codex", "--oauth").exit_code == 0
+    entry = status_entry(invoke("connect", "status", "--json"), "codex")
+    assert entry["skill"]["installed"] and entry["mcp"]["registered"] is True
+    assert entry["mcp"]["url"] == "https://mcp.akta.pro/mcp" and entry["mcp"]["cli_found"] is True
+
+
+def test_codex_launch_execs_codex(home, http, codex_cli, monkeypatch):
+    from akta_pro_cli.commands import connect as connect_cmd
+    launched = []
+    monkeypatch.setattr(connect_cmd.os, "execvp", lambda f, argv: launched.append(argv))
+    assert invoke("connect", "codex", "--oauth", "--launch").exit_code == 0
+    assert launched == [["/usr/local/bin/codex"]]

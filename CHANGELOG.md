@@ -23,6 +23,12 @@ All notable changes to the akta.pro CLI are documented here. The format follows
 - `akta-pro connect status` shows the installed skill version and whether the
   MCP server is registered. `akta-pro disconnect claude-code` removes both, and
   only deletes a skill folder that `connect` installed.
+- `akta-pro connect codex` does the same for OpenAI Codex, with the same flags.
+  It installs the skill to `~/.agents/skills/akta-pro/` and writes an
+  `[mcp_servers.akta-pro]` entry with the `x-api-key` header to
+  `~/.codex/config.toml` (`$CODEX_HOME` is respected). The rest of the file is
+  kept, the file is made mode 0600, and a config it can't edit safely is left
+  unchanged with an error. `akta-pro disconnect codex` removes both.
 
 ## [0.5.0]
 

@@ -117,12 +117,49 @@ akta-pro disconnect claude-code      # remove both
 `disconnect` only deletes a skill folder that `connect` installed. If you
 created `~/.claude/skills/akta-pro/` by hand, it is left alone.
 
+## Connect to Codex
+
+The same setup for [OpenAI Codex](https://developers.openai.com/codex), with
+the same flags:
+
+```bash
+pipx run --spec akta-pro-cli akta-pro connect codex
+# or install the CLI and connect in one go:
+pipx install akta-pro-cli && akta-pro connect codex
+```
+
+1. **Installs the akta-pro skill** to `~/.agents/skills/akta-pro/`, Codex's
+   user skills folder.
+2. **Adds the akta.pro MCP server** to `~/.codex/config.toml` (or
+   `$CODEX_HOME/config.toml`), which the Codex CLI, IDE extension, and desktop
+   app share:
+
+   ```toml
+   [mcp_servers.akta-pro]
+   url = "https://mcp.akta.pro/mcp"
+   http_headers = { "x-api-key" = "wk_..." }
+   ```
+
+`codex mcp add` can't set the `x-api-key` header, so `connect` writes this
+entry itself. The rest of the file is left untouched, and the file is set to
+mode 0600 because it now holds your key. If the file isn't valid TOML, or the
+entry is written in a form `connect` doesn't edit (such as an inline
+`mcp_servers = { … }` table), nothing is changed and you're told to fix it by
+hand. With `--oauth` the entry has only the `url`; sign in once with
+`codex mcp login akta-pro`. Codex doesn't need to be installed first: the entry
+is picked up when it next starts.
+
+```bash
+akta-pro disconnect codex            # remove the skill and the config entry
+```
+
 ## Commands
 
 | Command | Cost | Notes |
 |---|---|---|
 | `akta-pro connect claude-code` | free | install the skill + register the MCP server in Claude Code ([above](#connect-to-claude-code)) |
-| `akta-pro connect status` / `disconnect claude-code` | free | show / remove that setup |
+| `akta-pro connect codex` | free | the same for Codex ([above](#connect-to-codex)) |
+| `akta-pro connect status` / `disconnect <agent>` | free | show / remove that setup |
 | `akta-pro account` | free | your tier + credit balance |
 | `akta-pro company search <query>` | free | run first; returns `uuid` |
 | `akta-pro company data <company> -s ...` | per section | requires ≥1 `--section`; `--markdown` for a rendered report |

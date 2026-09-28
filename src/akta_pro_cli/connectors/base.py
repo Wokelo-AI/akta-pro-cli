@@ -1,6 +1,6 @@
 """The `Connector` interface every `akta-pro connect <target>` implements.
 
-A connector wires akta.pro into one agent (Claude Code today; Codex, Cursor, …
+A connector wires akta.pro into one agent (Claude Code, Codex; Cursor, …
 later): it installs the akta-pro skill where that agent looks for skills and
 registers the akta.pro MCP server in the agent's own config. The skill steps are
 shared here; only the paths and the MCP registration differ per agent.

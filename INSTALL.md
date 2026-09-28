@@ -101,6 +101,20 @@ With the CLI installed, the same thing is `akta-pro connect claude-code`, and
 Needs the Claude Code CLI (`claude`) on your PATH for the MCP step. See the
 [README](README.md#connect-to-claude-code) for flags.
 
+## Connect to Codex (optional)
+
+The same for OpenAI Codex. It installs the skill to `~/.agents/skills/akta-pro/`
+and adds an `[mcp_servers.akta-pro]` entry to `~/.codex/config.toml`:
+
+```bash
+pipx run --spec akta-pro-cli akta-pro connect codex
+# or install the CLI and connect in one command:
+pipx install akta-pro-cli && akta-pro connect codex
+```
+
+Codex doesn't need to be installed yet. See the
+[README](README.md#connect-to-codex) for details.
+
 ## Update
 
 ```bash
@@ -115,6 +129,7 @@ Released versions are listed on [PyPI](https://pypi.org/project/akta-pro-cli/#hi
 
 ```bash
 akta-pro disconnect claude-code    # if you ran `connect`: removes the skill + MCP server
+akta-pro disconnect codex          # same, for Codex
 pipx uninstall akta-pro-cli
 ```
 
@@ -127,6 +142,7 @@ pipx uninstall akta-pro-cli
 | A call times out (exit `5`) | Some endpoints can be slow — raise it: `akta-pro --timeout 120 <command>`. |
 | `pipx run` says "requires a different Python" | pipx is using Python < 3.11. Run `pipx run --python python3.12 --spec akta-pro-cli akta-pro connect claude-code`. |
 | `connect` says `claude` not found | Install Claude Code, then `akta-pro connect claude-code --mcp-only`. |
+| `connect codex` says the config can't be edited automatically | Remove the `akta-pro` entry from `~/.codex/config.toml` by hand, then rerun. |
 | Claude Code doesn't see the skill | Restart open Claude Code sessions (needed the first time `~/.claude/skills` is created). |
 | Changed your key | `akta-pro login --api-key wk_...`, then `akta-pro connect claude-code --force`. |
 | Need all options | `akta-pro --help`, `akta-pro <command> --help`. |

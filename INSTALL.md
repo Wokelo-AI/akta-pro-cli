@@ -85,6 +85,16 @@ pipx run --spec akta-pro-cli akta-pro connect claude-code
 # or: uvx --from akta-pro-cli akta-pro connect claude-code
 ```
 
+To install the CLI and connect in one command instead:
+
+```bash
+pipx install akta-pro-cli && akta-pro connect claude-code
+# or: uv tool install akta-pro-cli && akta-pro connect claude-code
+```
+
+If `akta-pro` isn't found right after installing, run `pipx ensurepath` (or
+`uv tool update-shell`), restart your shell, and run `akta-pro connect claude-code`.
+
 With the CLI installed, the same thing is `akta-pro connect claude-code`, and
 `akta-pro connect status` shows what's set up.
 

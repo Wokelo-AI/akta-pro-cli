@@ -62,6 +62,18 @@ pipx run --spec akta-pro-cli akta-pro connect claude-code
 uvx --from akta-pro-cli akta-pro connect claude-code
 ```
 
+To install the CLI and connect in one go, so `akta-pro` stays on your PATH:
+
+```bash
+pipx install akta-pro-cli && akta-pro connect claude-code
+# or, with uv:
+uv tool install akta-pro-cli && akta-pro connect claude-code
+```
+
+If this is the first tool pipx or uv has installed, run `pipx ensurepath` (or
+`uv tool update-shell`) and restart your shell first, or the second half fails
+with `command not found`.
+
 It asks for your API key (get one at
 <https://playground.akta.pro/dashboard/manage/api-keys>), or skip the prompt with
 `--api-key wk_...`. If the CLI is already installed and logged in, run

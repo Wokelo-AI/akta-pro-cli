@@ -2,11 +2,11 @@
 
 The akta.pro API says where the skill is: `GET {base_url}/skills/akta-pro`
 returns `{"name": "akta-pro", "url": "https://…"}`, and the file is downloaded
-from that blob URL. The file can be replaced, or moved, without a CLI release.
+from that URL on files.akta.pro. The file can be replaced, or moved, without a CLI release.
 
 Sources, one shape (`SkillPackage`):
 
-- **Remote SKILL.md** — a bare file on blob storage, identified by its content
+- **Remote SKILL.md** — a bare file on files.akta.pro, identified by its content
   hash: `connect` reinstalls only when the file changes.
 - **Remote manifest** — a URL ending in `.json` is read as
   `{"version": "1.0.0", "url": "https://…/akta-pro-skill-1.0.0.zip", "sha256": "…"}`,
@@ -48,13 +48,13 @@ SKILL_NAME = "akta-pro"
 SKILL_FILE = "SKILL.md"
 MARKER_FILE = ".akta-install.json"
 
-SKILL_ENDPOINT = f"/skills/{SKILL_NAME}"  # on the akta.pro API; answers with the blob URL
+SKILL_ENDPOINT = f"/skills/{SKILL_NAME}"  # on the akta.pro API; answers with the file URL
 SKILL_URL_ENV = "AKTA_SKILL_URL"
 
-# The only places a remote skill (or manifest, or zip) may come from. The storage
-# account holds other assets too, so the path is pinned as well as the host.
-SKILL_HOSTS: frozenset[str] = frozenset({"wokelofiles.blob.core.windows.net"})
-SKILL_PATH_PREFIX = "/assets/akta-pro/"
+# The only places a remote skill (or manifest, or zip) may come from. The host
+# serves other assets too, so the path is pinned as well as the host.
+SKILL_HOSTS: frozenset[str] = frozenset({"files.akta.pro"})
+SKILL_PATH_PREFIX = "/assets/"
 
 HTTP_TIMEOUT = 15.0
 MAX_MANIFEST_BYTES = 64 * 1024
@@ -69,7 +69,7 @@ class SkillError(RuntimeError):
 
 
 class SkillNetworkError(SkillError):
-    """Blob storage couldn't be reached (connection error, timeout, or 5xx)."""
+    """Skill storage couldn't be reached (connection error, timeout, or 5xx)."""
 
     def __init__(self, message: str, *, timeout: bool = False):
         super().__init__(message)
@@ -98,7 +98,7 @@ def describe(version: str | None, sha256: str | None) -> str:
 # --- sources ---------------------------------------------------------------
 
 def skill_url(base_url: str, timeout: float = HTTP_TIMEOUT) -> str:
-    """The skill's blob URL: `AKTA_SKILL_URL` if set, else asked of the API.
+    """The skill's file URL: `AKTA_SKILL_URL` if set, else asked of the API.
 
     The endpoint is public, so no API key is sent: `--skill-only` works without
     one, and the key never goes anywhere it isn't needed.
@@ -127,7 +127,7 @@ def skill_url(base_url: str, timeout: float = HTTP_TIMEOUT) -> str:
 
 
 def load_skill(base_url: str, timeout: float = HTTP_TIMEOUT) -> SkillPackage:
-    """Look up the skill's URL, then fetch it from blob storage. Raises
+    """Look up the skill's URL, then fetch it from files.akta.pro. Raises
     `SkillNetworkError` if either can't be reached, `SkillError` if what came
     back is wrong."""
     url = skill_url(base_url, timeout=timeout)

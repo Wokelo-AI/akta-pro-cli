@@ -28,11 +28,11 @@ from akta_pro_cli.connectors.skill import SkillError, check_url, parse_frontmatt
 runner = CliRunner()
 BASE = "https://api.akta.pro/api/v1"
 KEY = "wk_live_secret_key_9876"
-BLOB = "https://wokelofiles.blob.core.windows.net/assets/akta-pro"
-SKILL_URL = f"{BLOB}/SKILL.md"
+FILES = "https://files.akta.pro/assets"
+SKILL_URL = f"{FILES}/SKILL.md"
 SKILL_LOOKUP = f"{BASE}{skill_mod.SKILL_ENDPOINT}"
-MANIFEST = f"{BLOB}/manifest.json"
-ZIP_URL = f"{BLOB}/akta-pro-skill-2.0.0.zip"
+MANIFEST = f"{FILES}/manifest.json"
+ZIP_URL = f"{FILES}/akta-pro-skill-2.0.0.zip"
 SKILL_MD = b"---\nname: akta-pro\ndescription: Company intelligence via akta.pro.\n---\n\n# akta.pro\n"
 SKILL_MD_V2 = SKILL_MD + b"\nNew guidance.\n"
 
@@ -414,16 +414,21 @@ def test_oversized_hosted_file_is_refused(home, http, claude):
 
 
 @pytest.mark.parametrize("url", [
-    "http://wokelofiles.blob.core.windows.net/assets/akta-pro/SKILL.md",       # not HTTPS
-    "https://evil.example.com/assets/akta-pro/SKILL.md",                        # other host
-    "https://wokelofiles.blob.core.windows.net.evil.com/assets/akta-pro/SKILL.md",
-    "https://wokelofiles.blob.core.windows.net/assets/other/SKILL.md",          # other path
-    "https://wokelofiles.blob.core.windows.net/assets/akta-pro/../x/SKILL.md",  # traversal
-    "https://wokelofiles.blob.core.windows.net:8443/assets/akta-pro/SKILL.md",  # other port
+    "http://files.akta.pro/assets/SKILL.md",                                    # not HTTPS
+    "https://evil.example.com/assets/SKILL.md",                                 # other host
+    "https://files.akta.pro.evil.com/assets/SKILL.md",                          # lookalike host
+    "https://wokelofiles.blob.core.windows.net/assets/akta-pro/SKILL.md",       # old host, no longer allowed
+    "https://files.akta.pro/other/SKILL.md",                                    # other path
+    "https://files.akta.pro/assets/../x/SKILL.md",                              # traversal
+    "https://files.akta.pro:8443/assets/SKILL.md",                              # other port
 ])
 def test_disallowed_skill_urls_are_refused(url):
     with pytest.raises(SkillError):
         check_url(url)
+
+
+def test_akta_files_skill_url_is_allowed():
+    check_url("https://files.akta.pro/assets/SKILL.md")  # this is where the actual prod file is served from
 
 
 def test_skill_url_override_must_be_allowlisted(home, http, claude, monkeypatch):

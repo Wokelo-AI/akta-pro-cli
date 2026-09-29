@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
+from akta_pro_cli.client import DEFAULT_BASE_URL
 from akta_pro_cli.connectors import skill as _skill
 from akta_pro_cli.runtime import EXIT_API, EXIT_TIMEOUT
 
@@ -36,6 +37,7 @@ class StepResult:
 @dataclass
 class ConnectOptions:
     api_key: str | None  # None when registering for OAuth
+    base_url: str = DEFAULT_BASE_URL  # akta.pro API; asked where the skill file lives
     oauth: bool = False
     skill: bool = True
     mcp: bool = True
@@ -97,13 +99,14 @@ class Connector(ABC):
         """Command that starts the agent (for `--launch`), or None if unavailable."""
         return None
 
-    def install_skill_step(self, force: bool, notes: list[str]) -> StepResult:
+    def install_skill_step(self, opts: ConnectOptions, notes: list[str]) -> StepResult:
+        force = opts.force
         dest = self.skill_dir()
         shown = f"{display_path(dest)}/"
         try:
-            pkg = _skill.load_skill()
+            pkg = _skill.load_skill(opts.base_url)
         except _skill.SkillNetworkError as exc:
-            # Storage unreachable (offline, firewalled, outage): keep a working
+            # API or storage unreachable (offline, firewalled, outage): keep a working
             # install rather than failing the whole command over it.
             marker = _skill.read_marker(dest)
             if marker is not None and (dest / _skill.SKILL_FILE).is_file():

@@ -153,7 +153,10 @@ def _connect(
         raise typer.Exit(code=EXIT_BAD_INPUT)
 
     connector = registry.get(target)
-    opts = ConnectOptions(api_key=None, oauth=oauth, skill=not mcp_only, mcp=not skill_only, force=force)
+    opts = ConnectOptions(
+        api_key=None, base_url=resolve_base_url(cfg), oauth=oauth,
+        skill=not mcp_only, mcp=not skill_only, force=force,
+    )
 
     if opts.mcp and not oauth:
         opts.api_key = _resolve_key(cfg, api_key, json_out)

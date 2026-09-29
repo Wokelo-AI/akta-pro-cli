@@ -1,7 +1,7 @@
 """Tests for `akta-pro connect` / `disconnect` / `connect status`.
 
 Network- and Claude-free: one respx router (the `http` fixture) serves the akta.pro
-key check and the hosted SKILL.md, and the `claude` CLI is replaced by
+key check, the skill lookup, and the hosted SKILL.md, and the `claude` CLI is replaced by
 `FakeClaude`, which records every call and answers `mcp get/add/remove` from a
 scripted state. HOME and the config dir point at a temp dir, so nothing real is
 touched.
@@ -28,8 +28,9 @@ from akta_pro_cli.connectors.skill import SkillError, check_url, parse_frontmatt
 runner = CliRunner()
 BASE = "https://api.akta.pro/api/v1"
 KEY = "wk_live_secret_key_9876"
-SKILL_URL = skill_mod.DEFAULT_SKILL_URL
 BLOB = "https://wokelofiles.blob.core.windows.net/assets/akta-pro"
+SKILL_URL = f"{BLOB}/SKILL.md"
+SKILL_LOOKUP = f"{BASE}{skill_mod.SKILL_ENDPOINT}"
 MANIFEST = f"{BLOB}/manifest.json"
 ZIP_URL = f"{BLOB}/akta-pro-skill-2.0.0.zip"
 SKILL_MD = b"---\nname: akta-pro\ndescription: Company intelligence via akta.pro.\n---\n\n# akta.pro\n"
@@ -81,9 +82,10 @@ def home(tmp_path, monkeypatch):
 
 @pytest.fixture
 def http(home):
-    """All HTTP for a test. Serves the hosted SKILL.md by default; anything
-    not routed fails the test."""
+    """All HTTP for a test. Serves the skill lookup and the hosted SKILL.md by
+    default; anything not routed fails the test."""
     with respx.mock(assert_all_called=False) as mock:
+        mock.get(SKILL_LOOKUP).mock(return_value=httpx.Response(200, json={"name": "akta-pro", "url": SKILL_URL}))
         mock.get(SKILL_URL).mock(return_value=httpx.Response(200, content=SKILL_MD))
         yield mock
 
@@ -428,6 +430,52 @@ def test_skill_url_override_must_be_allowlisted(home, http, claude, monkeypatch)
     monkeypatch.setenv(skill_mod.SKILL_URL_ENV, "https://evil.example.com/assets/akta-pro/SKILL.md")
     res = invoke("connect", "claude-code", "--skill-only")  # refused before any request
     assert res.exit_code == 4 and "allowlisted" in res.output
+
+
+# --- skill lookup (akta.pro API) ----------------------------------------------
+
+def test_skill_lookup_sends_no_api_key(home, http, claude, key_ok):
+    assert invoke("connect", "claude-code", "--api-key", KEY).exit_code == 0
+    lookup = http.routes[0].calls.last.request
+    assert lookup.url == SKILL_LOOKUP and "x-api-key" not in lookup.headers
+
+
+def test_skill_lookup_honours_base_url(home, http, claude):
+    alt = "http://localhost:8000/api/v1"
+    route = http.get(f"{alt}{skill_mod.SKILL_ENDPOINT}").mock(
+        return_value=httpx.Response(200, json={"name": "akta-pro", "url": SKILL_URL}))
+    assert invoke("--base-url", alt, "connect", "claude-code", "--skill-only").exit_code == 0
+    assert route.called
+
+
+def test_skill_lookup_outage_keeps_existing_install(home, http, claude):
+    assert invoke("connect", "claude-code", "--skill-only").exit_code == 0
+    http.get(SKILL_LOOKUP).mock(return_value=httpx.Response(503))
+    res = invoke("connect", "claude-code", "--skill-only", "--force")
+    assert res.exit_code == 0 and "Kept the installed skill" in res.output
+
+
+@pytest.mark.parametrize("response, message", [
+    (httpx.Response(404), "HTTP 404"),
+    (httpx.Response(200, content=b"<html>"), "invalid JSON"),
+    (httpx.Response(200, json={"name": "akta-pro"}), "missing 'url'"),
+    (httpx.Response(200, json={"url": "https://evil.example.com/assets/akta-pro/SKILL.md"}), "allowlisted"),
+])
+def test_bad_skill_lookup_aborts(home, http, claude, response, message):
+    http.get(SKILL_LOOKUP).mock(return_value=response)
+    res = invoke("connect", "claude-code", "--skill-only")
+    assert res.exit_code == 4 and message in res.output
+    assert not skill_dir(home).exists()
+
+
+def test_manifest_url_from_lookup_installs(home, http, claude):
+    archive = make_zip({"SKILL.md": SKILL_MD})
+    manifest = {"version": "2.0.0", "url": ZIP_URL, "sha256": hashlib.sha256(archive).hexdigest()}
+    http.get(SKILL_LOOKUP).mock(return_value=httpx.Response(200, json={"url": MANIFEST}))
+    http.get(MANIFEST).mock(return_value=httpx.Response(200, json=manifest))
+    http.get(ZIP_URL).mock(return_value=httpx.Response(200, content=archive))
+    res = invoke("connect", "claude-code", "--skill-only")
+    assert res.exit_code == 0 and "v2.0.0" in res.output
 
 
 # --- remote manifest + zip ----------------------------------------------------

@@ -186,7 +186,7 @@ class CodexConnector(Connector):
     def connect(self, opts: ConnectOptions) -> Report:
         report = Report(self.name, self.display_name, "connect")
         if opts.skill:
-            report.steps["skill"] = self.install_skill_step(opts.force, report.notes)
+            report.steps["skill"] = self.install_skill_step(opts, report.notes)
         if opts.mcp:
             report.steps["mcp"] = self._register(opts, report.notes)
         if shutil.which("codex") is None:

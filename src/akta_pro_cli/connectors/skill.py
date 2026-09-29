@@ -1,17 +1,22 @@
 """The akta-pro agent skill: where it comes from and how it lands on disk.
 
+The akta.pro API says where the skill is: `GET {base_url}/skills/akta-pro`
+returns `{"name": "akta-pro", "url": "https://…"}`, and the file is downloaded
+from that blob URL. The file can be replaced, or moved, without a CLI release.
+
 Sources, one shape (`SkillPackage`):
 
-- **Remote SKILL.md** (the default) — `DEFAULT_SKILL_URL` on blob storage, the
-  single source of truth, so the skill is updated without a CLI release.
-  Identified by its content hash: `connect` reinstalls only when the file changes.
+- **Remote SKILL.md** — a bare file on blob storage, identified by its content
+  hash: `connect` reinstalls only when the file changes.
 - **Remote manifest** — a URL ending in `.json` is read as
   `{"version": "1.0.0", "url": "https://…/akta-pro-skill-1.0.0.zip", "sha256": "…"}`,
   for a versioned zip with extra reference files. The zip's SHA-256 must match,
   and every entry is checked for zip-slip.
 
 Remote URLs must be HTTPS, on an allowlisted host and path prefix, and are never
-redirected. `AKTA_SKILL_URL` overrides the default for internal testing.
+redirected. That holds for the URL the API returns too, so the API alone can't
+point the CLI anywhere else. `AKTA_SKILL_URL` skips the API lookup, for
+internal testing.
 
 `install_skill()` validates the files, stages them next to the destination, and
 swaps them into place with renames, so a failure never leaves a partial skill.
@@ -43,7 +48,7 @@ SKILL_NAME = "akta-pro"
 SKILL_FILE = "SKILL.md"
 MARKER_FILE = ".akta-install.json"
 
-DEFAULT_SKILL_URL = "https://wokelofiles.blob.core.windows.net/assets/akta-pro/SKILL.md"
+SKILL_ENDPOINT = f"/skills/{SKILL_NAME}"  # on the akta.pro API; answers with the blob URL
 SKILL_URL_ENV = "AKTA_SKILL_URL"
 
 # The only places a remote skill (or manifest, or zip) may come from. The storage
@@ -92,14 +97,40 @@ def describe(version: str | None, sha256: str | None) -> str:
 
 # --- sources ---------------------------------------------------------------
 
-def skill_url() -> str:
-    return os.environ.get(SKILL_URL_ENV) or DEFAULT_SKILL_URL
+def skill_url(base_url: str, timeout: float = HTTP_TIMEOUT) -> str:
+    """The skill's blob URL: `AKTA_SKILL_URL` if set, else asked of the API.
+
+    The endpoint is public, so no API key is sent: `--skill-only` works without
+    one, and the key never goes anywhere it isn't needed.
+    """
+    override = os.environ.get(SKILL_URL_ENV)
+    if override:
+        return override
+    endpoint = base_url.rstrip("/") + SKILL_ENDPOINT
+    try:
+        with _client(timeout) as client:
+            resp = client.get(endpoint, headers={"X-Client-Source": CLIENT_SOURCE})
+    except httpx.HTTPError as exc:
+        raise _network_error(exc) from exc
+    if resp.status_code >= 500:
+        raise SkillNetworkError(f"akta.pro API unavailable (HTTP {resp.status_code}).")
+    if resp.status_code != 200:
+        raise SkillError(f"Skill lookup failed: HTTP {resp.status_code} for {endpoint}")
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise SkillError("Skill lookup returned invalid JSON.") from exc
+    url = data.get("url") if isinstance(data, dict) else None
+    if not isinstance(url, str) or not url.strip():
+        raise SkillError("Skill lookup response is missing 'url'.")
+    return url.strip()
 
 
-def load_skill(timeout: float = HTTP_TIMEOUT) -> SkillPackage:
-    """Fetch the skill from blob storage. Raises `SkillNetworkError` if it can't
-    be reached, `SkillError` if what came back is wrong."""
-    url = skill_url()
+def load_skill(base_url: str, timeout: float = HTTP_TIMEOUT) -> SkillPackage:
+    """Look up the skill's URL, then fetch it from blob storage. Raises
+    `SkillNetworkError` if either can't be reached, `SkillError` if what came
+    back is wrong."""
+    url = skill_url(base_url, timeout=timeout)
     if urlsplit(url).path.endswith(".json"):
         return fetch_remote_skill(url, timeout=timeout)
     return fetch_skill_file(url, timeout=timeout)

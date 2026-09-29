@@ -417,13 +417,17 @@ def test_oversized_hosted_file_is_refused(home, http, claude):
     "http://wokelofiles.blob.core.windows.net/assets/akta-pro/SKILL.md",       # not HTTPS
     "https://evil.example.com/assets/akta-pro/SKILL.md",                        # other host
     "https://wokelofiles.blob.core.windows.net.evil.com/assets/akta-pro/SKILL.md",
-    "https://wokelofiles.blob.core.windows.net/assets/other/SKILL.md",          # other path
+    "https://wokelofiles.blob.core.windows.net/other/SKILL.md",                 # other path
     "https://wokelofiles.blob.core.windows.net/assets/akta-pro/../x/SKILL.md",  # traversal
     "https://wokelofiles.blob.core.windows.net:8443/assets/akta-pro/SKILL.md",  # other port
 ])
 def test_disallowed_skill_urls_are_refused(url):
     with pytest.raises(SkillError):
         check_url(url)
+
+
+def test_akta_files_skill_url_is_allowed():
+    check_url("https://files.akta.pro/assets/SKILL.md")  # this is where the actual prod file is served from
 
 
 def test_skill_url_override_must_be_allowlisted(home, http, claude, monkeypatch):

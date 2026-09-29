@@ -53,8 +53,8 @@ SKILL_URL_ENV = "AKTA_SKILL_URL"
 
 # The only places a remote skill (or manifest, or zip) may come from. The storage
 # account holds other assets too, so the path is pinned as well as the host.
-SKILL_HOSTS: frozenset[str] = frozenset({"wokelofiles.blob.core.windows.net"})
-SKILL_PATH_PREFIX = "/assets/akta-pro/"
+SKILL_HOSTS: frozenset[str] = frozenset({"wokelofiles.blob.core.windows.net", "files.akta.pro"})
+SKILL_PATH_PREFIX = "/assets/"
 
 HTTP_TIMEOUT = 15.0
 MAX_MANIFEST_BYTES = 64 * 1024

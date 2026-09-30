@@ -29,6 +29,9 @@ All notable changes to the akta.pro CLI are documented here. The format follows
   `~/.codex/config.toml` (`$CODEX_HOME` is respected). The rest of the file is
   kept, the file is made mode 0600, and a config it can't edit safely is left
   unchanged with an error. `akta-pro disconnect codex` removes both.
+- A bare `SKILL.md` that declares a `version` in its frontmatter is labelled
+  with it (`v0.5.0`) instead of a content hash (`@afc6b5c`). It is still
+  identified by content, so an edit at the same version still reinstalls.
 - `connect` asks the akta.pro API where the skill lives
   (`GET /api/v1/skills/akta-pro`, no key sent) and downloads it from the blob URL
   it returns, so the skill can move without a CLI release. `--base-url` applies.

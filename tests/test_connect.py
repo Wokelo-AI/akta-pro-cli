@@ -35,6 +35,7 @@ MANIFEST = f"{FILES}/manifest.json"
 ZIP_URL = f"{FILES}/akta-pro-skill-2.0.0.zip"
 SKILL_MD = b"---\nname: akta-pro\ndescription: Company intelligence via akta.pro.\n---\n\n# akta.pro\n"
 SKILL_MD_V2 = SKILL_MD + b"\nNew guidance.\n"
+SKILL_MD_VERSIONED = b"---\nname: akta-pro\nversion: 1.2.3\ndescription: Company intelligence via akta.pro.\n---\n\n# akta.pro\n"
 
 
 class FakeClaude:
@@ -330,6 +331,19 @@ def test_skill_is_updated_when_hosted_file_changes(home, http, claude):
     assert res.exit_code == 0, res.output
     assert (skill_dir(home) / "SKILL.md").read_bytes() == SKILL_MD_V2
     assert f"@{hashlib.sha256(SKILL_MD_V2).hexdigest()[:7]}" in res.output
+
+
+def test_skill_labelled_with_its_declared_version(home, http, claude):
+    """A bare SKILL.md that declares a version is shown as v1.2.3, not @hash."""
+    http.get(SKILL_URL).mock(return_value=httpx.Response(200, content=SKILL_MD_VERSIONED))
+    res = invoke("connect", "claude-code", "--skill-only")
+    assert res.exit_code == 0, res.output
+    assert "v1.2.3" in res.output
+    m = marker(home)
+    assert m["version"] == "1.2.3"
+    assert m["sha256"] == hashlib.sha256(SKILL_MD_VERSIONED).hexdigest()
+    # Still identified by content, so an unchanged file is not reinstalled.
+    assert "already installed" in invoke("connect", "claude-code", "--skill-only").output
 
 
 def test_unmanaged_skill_folder_needs_force(home, http, claude):

@@ -147,6 +147,17 @@ def content_hash(files: dict[str, bytes]) -> str:
     return digest.hexdigest()
 
 
+def declared_version(content: bytes) -> str | None:
+    """The `version` a SKILL.md declares, or None. Never raises: the file is
+    validated at install time, and a label is not worth failing a download for.
+    """
+    try:
+        version = parse_frontmatter(content.decode("utf-8")).get("version", "").strip()
+    except (SkillError, UnicodeDecodeError):
+        return None
+    return version or None
+
+
 def check_url(url: str) -> None:
     parts = urlsplit(url)
     if parts.scheme != "https":
@@ -169,7 +180,8 @@ def _network_error(exc: httpx.HTTPError) -> SkillNetworkError:
 
 
 def fetch_skill_file(url: str, timeout: float = HTTP_TIMEOUT) -> SkillPackage:
-    """A bare SKILL.md, versioned by its SHA-256."""
+    """A bare SKILL.md, identified by its SHA-256 and labelled with the
+    `version` from its own frontmatter when it declares one."""
     check_url(url)
     try:
         with _client(timeout) as client:
@@ -177,7 +189,7 @@ def fetch_skill_file(url: str, timeout: float = HTTP_TIMEOUT) -> SkillPackage:
     except httpx.HTTPError as exc:
         raise _network_error(exc) from exc
     files = {SKILL_FILE: content}
-    return SkillPackage(None, content_hash(files), url, files)
+    return SkillPackage(declared_version(content), content_hash(files), url, files)
 
 
 def fetch_remote_skill(url: str, timeout: float = HTTP_TIMEOUT) -> SkillPackage:

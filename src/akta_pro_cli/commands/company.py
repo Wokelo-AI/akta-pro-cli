@@ -58,15 +58,17 @@ def _search_table(result: object) -> Table | None:
     if not rows:
         return None
     table = Table(title="Company search results")
-    for col in ("Name", "Website", "Category", "Status", "UUID"):
+    for col in ("Name", "Website", "Category", "Status", "UUID", "Parent"):
         table.add_column(col, overflow="fold")
     for row in rows:
+        parent = row.get("parent_company") or {}
         table.add_row(
             str(row.get("name", "")),
             str(row.get("website", "")),
             str(row.get("product_category", "")),
             str(row.get("company_status", "")),
             str(row.get("uuid", "")),
+            f"{parent.get('name', '')} ({parent.get('uuid', '')})" if parent else "",
         )
     return table
 
@@ -75,15 +77,24 @@ def _search_table(result: object) -> Table | None:
 def search(
     ctx: typer.Context,
     query: Annotated[str, typer.Argument(help="Company name or website, e.g. 'Canva' or 'canva.com'.")],
+    include_children: Annotated[
+        bool,
+        typer.Option("--include-children", help="Also match child companies (subsidiaries, divisions). Top-level companies only by default."),
+    ] = False,
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
     """Resolve a company by name or website to its akta.pro identifiers (free).
 
     Run this first — every other company command needs the `uuid` (or website)
-    returned here.
+    returned here. A child company's row names its parent company.
     """
-    result = fetch(ctx.obj, "/company/search", {"query": query})
+    params = {
+        "query": query,
+        # The API names this `include_children_companies`.
+        "include_children_companies": True if include_children else None,
+    }
+    result = fetch(ctx.obj, "/company/search", params)
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_search_table)
 
 

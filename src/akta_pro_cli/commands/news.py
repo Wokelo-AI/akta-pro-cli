@@ -85,7 +85,7 @@ def signals(
     iptc_codes: Annotated[list[str] | None, typer.Option("--iptc", help="Filter by IPTC media topic code(s) (repeatable).")] = None,
     iab_codes: Annotated[list[str] | None, typer.Option("--iab", help="Filter by IAB content taxonomy code(s) (repeatable).")] = None,
     group_articles: Annotated[bool, typer.Option("--group-articles", help="Group near-duplicate articles from the same event.")] = False,
-    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=1000, help="Max articles (max 1000).")] = 10,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, clamp=True, help="Max articles (max 100; larger values are capped).")] = 10,
     offset: Annotated[int, typer.Option("--offset", min=0, help="Pagination offset.")] = 0,
     full: Annotated[bool, typer.Option("--full", help="Return all per-article fields (industries, types, entities, mentions) except body text.")] = False,
     json_out: JsonOpt = False,

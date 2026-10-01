@@ -112,6 +112,39 @@ def test_search_sends_headers_and_query():
 
 
 @respx.mock
+def test_search_include_children_forwarded():
+    route = respx.get(f"{BASE}/company/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe",
+                              "--include-children", "--json"])
+    assert res.exit_code == 0
+    params = route.calls.last.request.url.params
+    assert params.get("include_children_companies") == "true"
+
+
+@respx.mock
+def test_search_omits_include_children_by_default():
+    route = respx.get(f"{BASE}/company/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe", "--json"])
+    assert res.exit_code == 0
+    assert "include_children_companies" not in route.calls.last.request.url.params
+
+
+@respx.mock
+def test_search_table_shows_parent_company():
+    respx.get(f"{BASE}/company/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": [
+            {"name": "Stripe Capital", "uuid": "00000s2",
+             "parent_company": {"name": "Stripe", "uuid": "00000s1"}},
+        ]}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe Capital",
+                              "--include-children"])
+    assert res.exit_code == 0
+    assert "00000s1" in res.stdout
+
+
+@respx.mock
 def test_account():
     respx.get(f"{BASE}/mcp/account").mock(
         return_value=httpx.Response(200, json={"is_enterprise": False, "package_type": "top_up",

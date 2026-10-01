@@ -161,7 +161,7 @@ akta-pro disconnect codex            # remove the skill and the config entry
 | `akta-pro connect codex` | free | the same for Codex ([above](#connect-to-codex)) |
 | `akta-pro connect status` / `disconnect <agent>` | free | show / remove that setup |
 | `akta-pro account` | free | your tier + credit balance |
-| `akta-pro company search <query>` | free | run first; returns `uuid` |
+| `akta-pro company search <query>` | free | run first; returns `uuid`. `--include-children` also matches subsidiaries/divisions (rows name their parent) |
 | `akta-pro company data <company> -s ...` | per section | requires ≥1 `--section`; `--markdown` for a rendered report |
 | `akta-pro company concise <company>` | 8 | slimmed JSON |
 | `akta-pro company add <name> <website>` | free | submit a missing company; returns `request_id` (or `already_exists`) |

@@ -3,6 +3,14 @@
 All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.7.0]
+
+### Added
+- `akta-pro company search --include-children` also matches child companies
+  (subsidiaries, divisions). Results are top-level companies only by default.
+  The results table has a new Parent column, filled from each child row's
+  `parent_company`.
+
 ## [0.6.0]
 
 ### Added

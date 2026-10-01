@@ -168,7 +168,7 @@ akta-pro disconnect codex            # remove the skill and the config entry
 | `akta-pro status <request_id>` | free | poll an async request, e.g. from `company add` |
 | `akta-pro industry search <query>` | free | codes feed `news signals --industry` / list filters; `--level l1..l4/all` (repeatable) |
 | `akta-pro region search [query]` | free | codes feed list filters; `--level region\|sub-region\|intermediate-region` |
-| `akta-pro news signals [filters]` | 0.1 + 0.01/article | anchor with `--company/--primary-company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); compact list with `id`s |
+| `akta-pro news signals [filters]` | 0.1 + 0.01/article | anchor with `--company/--primary-company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); `-n/--limit` max 100; compact list with `id`s |
 | `akta-pro news detail <id>...` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
 | `akta-pro news types` | free | tag codes for `--type-code`; offline, no key |
 | `akta-pro list generate companies` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation) or `--filters` (JSON/@file), `-s/--section`, `--sort-by/--sort-order`, `-n/--limit`, `--offset` |

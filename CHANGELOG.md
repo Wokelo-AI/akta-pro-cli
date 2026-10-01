@@ -11,6 +11,11 @@ All notable changes to the akta.pro CLI are documented here. The format follows
   The results table has a new Parent column, filled from each child row's
   `parent_company`.
 
+### Changed
+- `akta-pro news signals -n/--limit` now caps at 100, matching the API. A
+  larger value is lowered to 100 instead of failing.
+
+
 ## [0.6.0]
 
 ### Added

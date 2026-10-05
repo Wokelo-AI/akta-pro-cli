@@ -90,7 +90,7 @@ def probe_is_enterprise(ctx: AppContext) -> bool:
     client = AktaClient(resolve_base_url(ctx), key, timeout=ctx.timeout)
     try:
         account = client.get("/mcp/account")
-        return bool(account.get("is_enterprise")) if isinstance(account, dict) else False
+        return (bool(account.get("is_enterprise")) or account.get("package_type") in ("subscription", "agent")) if isinstance(account, dict) else False
     except Exception:
         return False
     finally:

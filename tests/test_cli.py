@@ -443,6 +443,19 @@ def test_enterprise_section_skipped_for_non_enterprise():
     assert route.calls.last.request.url.params.get("sections") == "firmographic"
 
 
+@respx.mock
+def test_funding_section_kept_for_subscription():
+    # subscription (and agent) include funding/M&A even though is_enterprise is false
+    respx.get(f"{BASE}/mcp/account").mock(
+        return_value=httpx.Response(200, json={"is_enterprise": False, "package_type": "subscription"}))
+    route = respx.get(f"{BASE}/company/enrichment/markdown").mock(
+        return_value=httpx.Response(200, headers={"content-type": "text/markdown"}, text="# Canva"))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
+                              "-s", "firmographic", "-s", "mna_and_investment", "--markdown", "--raw"])
+    assert res.exit_code == 0
+    assert route.calls.last.request.url.params.get("sections") == "firmographic,mna_and_investment"
+
+
 # --- base URL override ---
 
 @respx.mock

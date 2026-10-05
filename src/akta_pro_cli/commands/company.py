@@ -43,7 +43,8 @@ ENTERPRISE_SECTIONS = {"funding_detail", "mna_and_investment"}
 
 # The per-section price list, shared verbatim with `list generate companies`
 # (which bills these per company) so both help screens can price a call.
-SECTION_CREDITS = """  business_model       2     industry             1
+SECTION_CREDITS = """  
+  business_model       2     industry             0.5
   company_assessment   2     location             0.5
   company_hierarchy    0.5   management_profile   1
   customer_profile     1     mna_and_investment*  5

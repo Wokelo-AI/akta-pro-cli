@@ -16,9 +16,10 @@ app = typer.Typer(no_args_is_help=True, help="Company search, enrichment, and co
 
 
 class Section(str, Enum):
-    """Enrichment sections. `funding_detail` / `mna_and_investment` are
-    enterprise-only: selectable, but auto-skipped for non-enterprise callers
-    (the backend 403s the whole request otherwise)."""
+    """Enrichment sections. `funding_detail` / `mna_and_investment` are not on
+    pay-as-you-go: selectable, but auto-skipped there (the backend 403s the
+    whole request otherwise). Subscription get a trimmed view,
+    enterprise the full data."""
 
     firmographic = "firmographic"
     business_model = "business_model"
@@ -111,8 +112,9 @@ Sections and their credit cost — these names are the `-s/--section` values:
 
 {SECTION_CREDITS}
 
-* Enterprise-only: auto-skipped (not an error) for non-enterprise callers,
-with a note listing any dropped.
+* Subscription/Enterprise: Subscription get a trimmed view
+(first 3 rounds/investors/deals, month-year dates); Enterprise gets full data.
+Auto-skipped (not an error) on pay-as-you-go, with a note listing any dropped.
 
 Example — two sections, rendered as Markdown (4 credits):
 

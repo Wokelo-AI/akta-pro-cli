@@ -69,7 +69,7 @@ def signals(
     industry: Annotated[str | None, typer.Option("--industry", help="Comma-separated industry codes (from `akta-pro industry search`) — preferred for sector/market topics.")] = None,
     query: Annotated[str | None, typer.Option("--query", help="Open-ended topic, e.g. 'crude oil prices' (last resort; prefer --company/--industry).")] = None,
     title: Annotated[str | None, typer.Option("--title", help="Search by text in the article title.")] = None,
-    start_date: Annotated[str | None, typer.Option("--start-date", help="Start of range, YYYY-MM-DD. Non-enterprise limited to ~6 months back.")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="Start of range, YYYY-MM-DD. Lookback by plan: pay-as-you-go 6 months, Subscription 1 year, Agent/Enterprise unlimited.")] = None,
     end_date: Annotated[str | None, typer.Option("--end-date", help="End of range, YYYY-MM-DD. Default today.")] = None,
     type_codes: Annotated[list[str] | None, typer.Option("--type-code", "-t", help="News-type tag code(s) from `akta-pro news types`, e.g. SD01, CM03 (repeatable).")] = None,
     sentiment: Annotated[Sentiment, typer.Option("--sentiment", help="Filter by article sentiment.")] = Sentiment.all,

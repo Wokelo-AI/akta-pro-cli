@@ -63,7 +63,8 @@ Cost: 1.5/call (once any company matches) + 0.2/company + each --section's
 the NL-to-filters translation.
 
 Section credits, each multiplied by the number of companies returned
-(`*` = enterprise-only; use --skip-unavailable if your plan lacks them):
+(`*` = funding/M&A: not on pay-as-you-go, trimmed view on Subscription, full on
+Enterprise; use --skip-unavailable if your plan lacks them):
 
 {SECTION_CREDITS}
 

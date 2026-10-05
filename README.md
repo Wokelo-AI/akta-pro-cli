@@ -186,9 +186,10 @@ akta-pro disconnect codex            # remove the skill and the config entry
 `business_model`, `company_assessment`, `trust_signal`, `company_hierarchy`,
 `digital_presence`, `financial_estimate`, `location`, `management_profile`,
 `product_offering`, `strategic_signal`, `customer_profile`, `industry`,
-`technology`, plus enterprise-only `funding_detail` (3) and `mna_and_investment`
-(5). There is no "all" — choose explicitly. The two enterprise sections are
-auto-skipped (not an error) for non-enterprise callers, with a note.
+`technology`, plus `funding_detail` (3) and `mna_and_investment` (5). There is no "all" —
+choose explicitly. The two funding sections are included on Subscription(trimmed view) 
+and Enterprise (full data); on pay-as-you-go they are
+auto-skipped (not an error), with a note.
 
 Run `akta-pro <command> --help` for every flag.
 

@@ -54,7 +54,8 @@ def search(
     """Resolve a free-text industry to akta.pro industry codes (free).
 
     Use the returned `code` values as `--industry` in `akta-pro news signals`,
-    or in `akta-pro list generate companies --filters` under `industry.industry`.
+    or for company lists in `akta-pro list generate companies --filters` under
+    `industry.industry` (a broader code matches every company beneath it).
     """
     params = {"query": query, "level": csv_join([lv.value for lv in level] if level else None)}
     result = fetch(ctx.obj, "/industry/search", params)

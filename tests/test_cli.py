@@ -123,12 +123,14 @@ def test_search_include_children_forwarded():
 
 
 @respx.mock
-def test_search_omits_include_children_by_default():
+def test_search_sends_include_children_false_by_default():
+    """The API defaults this to true, so `false` has to be sent explicitly —
+    omitting it returned child companies even without the flag."""
     route = respx.get(f"{BASE}/company/search").mock(
         return_value=httpx.Response(200, json={"credits_consumed": 0, "data": []}))
     res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe", "--json"])
     assert res.exit_code == 0
-    assert "include_children_companies" not in route.calls.last.request.url.params
+    assert route.calls.last.request.url.params.get("include_children_companies") == "false"
 
 
 @respx.mock

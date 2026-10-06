@@ -12,8 +12,16 @@ All notable changes to the akta.pro CLI are documented here. The format follows
   `parent_company`.
 
 ### Changed
+- `akta-pro company search` returns top-level companies only unless
+  `--include-children` is passed. The API includes child companies by default,
+  so earlier versions always returned them and the flag had no effect; the
+  value is now sent either way.
 - `akta-pro news signals -n/--limit` now caps at 100, matching the API. A
   larger value is lowered to 100 instead of failing.
+- The `industry` enrichment section costs 0.5 credits, not 1.
+- `funding_detail` and `mna_and_investment` are no longer dropped for
+  Subscription and Agent callers. The backend grants those tiers the sections
+  (Subscription gets a trimmed view), so only pay-as-you-go auto-skips them.
 
 
 ## [0.6.0]

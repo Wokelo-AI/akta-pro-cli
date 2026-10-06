@@ -79,7 +79,9 @@ def validate_key(base_url: str, key: str) -> tuple[bool, str]:
 
 
 def probe_is_enterprise(ctx: AppContext) -> bool:
-    """Best-effort Enterprise-tier check via /mcp/account (free, 0 credits).
+    """Whether this plan covers the funding/M&A sections, via /mcp/account
+    (free, 0 credits). True for Enterprise, and for the Subscription and Agent
+    tiers, which the backend also grants those sections to.
 
     Returns False on any failure (no key, network error, endpoint not deployed)
     so a probe never blocks or crashes the actual command.

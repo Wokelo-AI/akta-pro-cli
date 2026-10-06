@@ -44,8 +44,7 @@ ENTERPRISE_SECTIONS = {"funding_detail", "mna_and_investment"}
 
 # The per-section price list, shared verbatim with `list generate companies`
 # (which bills these per company) so both help screens can price a call.
-SECTION_CREDITS = """  
-  business_model       2     industry             0.5
+SECTION_CREDITS = """  business_model       2     industry             0.5
   company_assessment   2     location             0.5
   company_hierarchy    0.5   management_profile   1
   customer_profile     1     mna_and_investment*  5
@@ -93,8 +92,10 @@ def search(
     """
     params = {
         "query": query,
-        # The API names this `include_children_companies`.
-        "include_children_companies": True if include_children else None,
+        # The API names this `include_children_companies` and defaults it to
+        # true, so the value is always sent — omitting it would include
+        # children even when the flag is off.
+        "include_children_companies": include_children,
     }
     result = fetch(ctx.obj, "/company/search", params)
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_search_table)

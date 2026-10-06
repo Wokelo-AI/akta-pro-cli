@@ -78,7 +78,7 @@ def validate_key(base_url: str, key: str) -> tuple[bool, str]:
         client.close()
 
 
-def probe_is_enterprise(ctx: AppContext) -> bool:
+def probe_has_premium_sections(ctx: AppContext) -> bool:
     """Whether this plan covers the funding/M&A sections, via /mcp/account
     (free, 0 credits). True for Enterprise, and for the Subscription and Agent
     tiers, which the backend also grants those sections to.

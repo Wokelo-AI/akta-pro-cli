@@ -10,7 +10,7 @@ from rich.table import Table
 
 from akta_pro_cli.console import err
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, post, probe_is_enterprise
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, post, probe_has_premium_sections
 
 app = typer.Typer(no_args_is_help=True, help="Company search, enrichment, and concise overview.")
 
@@ -39,8 +39,9 @@ class Section(str, Enum):
     mna_and_investment = "mna_and_investment"
 
 
-# Sections the akta.pro backend gates to Enterprise plans (mirrors the MCP tool).
-ENTERPRISE_SECTIONS = {"funding_detail", "mna_and_investment"}
+# Sections the akta.pro backend withholds from pay-as-you-go (mirrors the MCP
+# tool). Subscription gets a trimmed view of them, Enterprise the full data.
+PREMIUM_SECTIONS = {"funding_detail", "mna_and_investment"}
 
 # The per-section price list, shared verbatim with `list generate companies`
 # (which bills these per company) so both help screens can price a call.
@@ -153,15 +154,16 @@ def data(
         raise typer.Exit(code=EXIT_BAD_INPUT)
 
     requested = list(dict.fromkeys(s.value for s in sections))  # de-dupe, keep order
-    enterprise_req = [s for s in requested if s in ENTERPRISE_SECTIONS]
+    premium_req = [s for s in requested if s in PREMIUM_SECTIONS]
     skipped: list[str] = []
-    if enterprise_req and not probe_is_enterprise(ctx.obj):
-        requested = [s for s in requested if s not in ENTERPRISE_SECTIONS]
-        skipped = enterprise_req
+    if premium_req and not probe_has_premium_sections(ctx.obj):
+        requested = [s for s in requested if s not in PREMIUM_SECTIONS]
+        skipped = premium_req
     if not requested:
         err.print(
-            f"[yellow]Only enterprise-only section(s) requested ({', '.join(skipped)}); "
-            "your plan doesn't include them.[/] Pick non-enterprise sections or upgrade."
+            f"[yellow]Only section(s) your plan doesn't include were requested "
+            f"({', '.join(skipped)}).[/] Pick other sections, or upgrade to "
+            "Subscription or Enterprise."
         )
         raise typer.Exit(code=EXIT_BAD_INPUT)
 

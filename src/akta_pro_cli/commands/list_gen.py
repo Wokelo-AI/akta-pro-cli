@@ -91,7 +91,7 @@ def generate_companies(
     sections: Annotated[list[str] | None, typer.Option("-s", "--section", help="Enrichment section(s) to include per company (repeatable, same names as `company data`). Omit for identity fields only.")] = None,
     sort_by: Annotated[str | None, typer.Option("--sort-by", help="akta_rank (default), relevance (closeness to --free-text), headcount, revenue_estimate, total_funding, valuation_estimate, founded_year, or employee_range.")] = None,
     sort_order: Annotated[str | None, typer.Option("--sort-order", help="asc or desc (default desc).")] = None,
-    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=500, help="Max companies to return in this call: 500 (20 on pay-as-you-go). Page with --offset; offset+limit is capped at 1000 (50 on pay-as-you-go).")] = 20,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, help="Max companies to return in this call: 100 (20 on pay-as-you-go). Page with --offset; offset+limit is capped at 1000 (50 on pay-as-you-go).")] = 20,
     offset: Annotated[int, typer.Option("--offset", min=0, help="Pagination offset.")] = 0,
     skip_unavailable: Annotated[
         bool,

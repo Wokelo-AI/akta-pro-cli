@@ -3,6 +3,20 @@
 All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [Unreleased]
+
+### Added
+- `list generate companies --free-text "<keywords>"` finds companies by the kind
+  of business they do; sent as the `search.free_text` filter. Works alone or
+  with `--filters`.
+
+### Changed
+- `--sort-by` documents `akta_rank` (the default), `headcount`, and `relevance`
+  (closeness to `--free-text`). The `firmographic.headcount` range filter is
+  shown in the help example.
+- `-n/--limit` help: up to 500 per call (20 on pay-as-you-go); paging with
+  `--offset` reaches 1000 in total (50 on pay-as-you-go).
+
 ## [0.5.0]
 
 ### Changed

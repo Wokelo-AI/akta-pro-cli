@@ -12,6 +12,7 @@ import json
 import sys
 
 import httpx
+import pytest
 import respx
 from typer.testing import CliRunner
 
@@ -281,6 +282,28 @@ def test_list_generate_with_filters():
     body = json.loads(route.calls.last.request.content)
     assert body["filters"] == {"location.hq.country": "USA"}
     assert body["query"] is None
+
+
+@respx.mock
+@pytest.mark.parametrize("extra,expected", [
+    ([], {"search.free_text": "cold-chain logistics"}),
+    (["--filters", '{"location.hq.country": "USA"}'],
+     {"location.hq.country": "USA", "search.free_text": "cold-chain logistics"}),
+])
+def test_list_generate_with_free_text(extra, expected):
+    route = respx.post(f"{BASE}/list/generate/companies").mock(
+        return_value=httpx.Response(200, json={"data": [], "count": 0, "total_count": 0,
+                                               "credits_consumed": 0}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate", "companies",
+                              "--free-text", "cold-chain logistics", *extra, "--json"])
+    assert res.exit_code == 0
+    assert json.loads(route.calls.last.request.content)["filters"] == expected
+
+
+def test_list_generate_free_text_with_query_exits_2():
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "list", "generate", "companies",
+                              "--query", "x", "--free-text", "y"])
+    assert res.exit_code == 2
 
 
 @respx.mock

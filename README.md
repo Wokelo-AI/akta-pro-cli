@@ -66,7 +66,7 @@ export AKTA_PRO_API_KEY=wk_...                       # environment variable
 | `akta-pro news signals [filters]` | 0.1 + 0.01/article | anchor with `--company/--primary-company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); compact list with `id`s |
 | `akta-pro news detail <id>...` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
 | `akta-pro news types` | free | tag codes for `--type-code`; offline, no key |
-| `akta-pro list generate companies` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation) or `--filters` (JSON/@file), `-s/--section`, `--sort-by/--sort-order`, `-n/--limit`, `--offset` |
+| `akta-pro list generate companies` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation), or `--filters` (JSON/@file) and/or `--free-text` (kind of business), `-s/--section`, `--sort-by` (incl. `headcount`)/`--sort-order`, `-n/--limit` (≤500 per call, 20 on pay-as-you-go), `--offset` (offset+limit ≤1000, 50 on pay-as-you-go) |
 | `akta-pro list filters` | free | fields `--filters` accepts, and which have lookup-able values |
 | `akta-pro list filter-options <dropdown_type>` | free | allowed values for one filter field; `--query`, `-n/--limit`, `--level` |
 | `akta-pro list filter-builder <query>` | 2.5 | translate free text into structured `--filters` JSON for `list generate companies` |

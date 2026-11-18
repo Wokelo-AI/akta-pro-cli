@@ -3,7 +3,7 @@
 All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
-## [0.6.0]
+## [0.8.0]
 
 ### Added
 - `list generate companies --free-text "<keywords>"` finds companies by the kind
@@ -15,8 +15,72 @@ All notable changes to the akta.pro CLI are documented here. The format follows
   (closeness to `--free-text`). The help example filters size with the
   `firmographic.headcount_range` band filter (e.g. `["101-250", "251-500"]`).
 - List generation cost is now 0.1/call + 0.01/company (was 1.5 + 0.2).
+- Help now says `list generate companies -s` needs Subscription or Enterprise
+  (pay-as-you-go and Agent get 403), and that `--query` / `list filter-builder`
+  aren't on Agent plans.
+- `jobs -n` is capped at 100 and `posts -n` at 50, matching the API (larger
+  values used to fail server-side with 422).
+- `company data` names skipped funding/M&A sections as such (was
+  "enterprise-only"); Subscription and Agent include them too.
+- `akta-pro account` no longer shows `currency`, which made the credit balance
+  read as money.
 - `-n/--limit` is capped at 100 per call (was 500; 50 on pay-as-you-go); paging with
   `--offset` reaches 1000 in total (50 on pay-as-you-go).
+
+## [0.7.0]
+
+### Added
+- `akta-pro company search --include-children` also matches child companies
+  (subsidiaries, divisions). Results are top-level companies only by default.
+  The results table has a new Parent column, filled from each child row's
+  `parent_company`.
+
+### Changed
+- `akta-pro company search` returns top-level companies only unless
+  `--include-children` is passed. The API includes child companies by default,
+  so earlier versions always returned them and the flag had no effect; the
+  value is now sent either way.
+- `akta-pro news signals -n/--limit` now caps at 100, matching the API. A
+  larger value is lowered to 100 instead of failing.
+- The `industry` enrichment section costs 0.5 credits, not 1.
+- `funding_detail` and `mna_and_investment` are no longer dropped for
+  Subscription and Agent callers. The backend grants those tiers the sections
+  (Subscription gets a trimmed view), so only pay-as-you-go auto-skips them.
+
+
+## [0.6.0]
+
+### Added
+- `akta-pro connect claude-code` sets akta.pro up in Claude Code in one step.
+  It installs the akta-pro skill to `~/.claude/skills/akta-pro/` and registers
+  the akta.pro MCP server at user scope with the key from `akta-pro login`.
+  Options: `--api-key`, `--oauth` (no key; sign in through Claude Code),
+  `--skill-only`, `--mcp-only`, `--force`, `--launch`, and `--json`. Running it
+  again leaves an up-to-date setup unchanged. The key is checked against
+  akta.pro before it is registered; a rejected key exits with code 3.
+- `connect` logs the CLI in when it isn't already. With no stored key it asks
+  for one in a terminal (or takes `--api-key`), checks it, and saves it as
+  `akta-pro login` would. It never replaces an existing login, and never writes
+  a key from `AKTA_PRO_API_KEY` to disk.
+- Setup is one line with nothing installed first:
+  `pipx run --spec akta-pro-cli akta-pro connect claude-code` or
+  `uvx --from akta-pro-cli akta-pro connect claude-code`.
+- `akta-pro connect status` shows the installed skill version and whether the
+  MCP server is registered. `akta-pro disconnect claude-code` removes both, and
+  only deletes a skill folder that `connect` installed.
+- `akta-pro connect codex` does the same for OpenAI Codex, with the same flags.
+  It installs the skill to `~/.agents/skills/akta-pro/` and writes an
+  `[mcp_servers.akta-pro]` entry with the `x-api-key` header to
+  `~/.codex/config.toml` (`$CODEX_HOME` is respected). The rest of the file is
+  kept, the file is made mode 0600, and a config it can't edit safely is left
+  unchanged with an error. `akta-pro disconnect codex` removes both.
+- A bare `SKILL.md` that declares a `version` in its frontmatter is labelled
+  with it (`v0.5.0`) instead of a content hash (`@afc6b5c`). It is still
+  identified by content, so an edit at the same version still reinstalls.
+- `connect` asks the akta.pro API where the skill lives
+  (`GET /api/v1/skills/akta-pro`, no key sent) and downloads it from the blob URL
+  it returns, so the skill can move without a CLI release. `--base-url` applies.
+  The returned URL must still pass the host and path allowlist.
 
 ## [0.5.0]
 

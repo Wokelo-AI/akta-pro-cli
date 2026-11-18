@@ -15,7 +15,8 @@ def _account_table(result: object) -> Table | None:
     table = Table(title="akta.pro account", show_header=False)
     table.add_column("Field", style="bold")
     table.add_column("Value")
-    for key in ("package_type", "is_enterprise", "credit_balance", "currency"):
+    # `currency` left out: it belongs to the money balance, and next to credits it reads as "$4829".
+    for key in ("package_type", "is_enterprise", "credit_balance"):
         if key in result:
             table.add_row(key.replace("_", " ").title(), str(result[key]))
     return table

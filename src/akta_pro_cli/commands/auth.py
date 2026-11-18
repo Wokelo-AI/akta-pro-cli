@@ -9,34 +9,23 @@ from __future__ import annotations
 
 from typing import Annotated
 
-import httpx
 import typer
 
-from akta_pro_cli.client import AktaAPIError, AktaClient
 from akta_pro_cli.config import (
     clear_credentials,
     credentials_path,
+    mask_key,
     save_credentials,
     stored_api_key,
 )
 from akta_pro_cli.console import err, out
-from akta_pro_cli.runtime import EXIT_AUTH, EXIT_BAD_INPUT, AppContext, resolve_base_url
-
-
-def _validate_key(base_url: str, key: str) -> tuple[bool, str]:
-    """Probe a free endpoint to check the key. Returns (ok, message)."""
-    client = AktaClient(base_url, key)
-    try:
-        client.get("/company/search", params={"query": "akta"})
-        return True, "key is valid"
-    except AktaAPIError as exc:
-        if exc.status_code in (401, 403):
-            return False, f"key rejected ({exc.status_code})"
-        return True, f"could not fully verify (error {exc.status_code}), key stored anyway"
-    except httpx.HTTPError as exc:
-        return True, f"could not reach akta.pro to verify ({exc})"
-    finally:
-        client.close()
+from akta_pro_cli.runtime import (
+    EXIT_AUTH,
+    EXIT_BAD_INPUT,
+    AppContext,
+    resolve_base_url,
+    validate_key,
+)
 
 
 def login(
@@ -72,7 +61,7 @@ def login(
 
     # Local --base-url wins; else fall back to global flag/env → stored → default.
     base_url = base_url or resolve_base_url(cfg)
-    ok, message = _validate_key(base_url, key)
+    ok, message = validate_key(base_url, key)
     if not ok:
         err.print(f"[red]{message}.[/]")
         raise typer.Exit(code=EXIT_AUTH)
@@ -103,11 +92,10 @@ def whoami(ctx: typer.Context) -> None:
         raise typer.Exit(code=EXIT_AUTH)
 
     base_url = resolve_base_url(cfg)
-    masked = f"{key[:5]}…{key[-4:]}" if len(key) > 12 else "…"
-    out.print(f"API key : [bold]{masked}[/]  (source: {source})")
+    out.print(f"API key : [bold]{mask_key(key)}[/]  (source: {source})")
     out.print(f"Base URL: {base_url}")
 
-    ok, message = _validate_key(base_url, key)
+    ok, message = validate_key(base_url, key)
     if ok and message == "key is valid":
         out.print(f"[green]✓ {message}[/]")
     elif ok:

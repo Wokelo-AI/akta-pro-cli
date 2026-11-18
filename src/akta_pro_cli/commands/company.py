@@ -10,15 +10,16 @@ from rich.table import Table
 
 from akta_pro_cli.console import err
 from akta_pro_cli.options import JsonOpt, OutOpt
-from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, post, probe_is_enterprise
+from akta_pro_cli.runtime import EXIT_BAD_INPUT, emit, fetch, post, probe_has_premium_sections
 
 app = typer.Typer(no_args_is_help=True, help="Company search, enrichment, and concise overview.")
 
 
 class Section(str, Enum):
-    """Enrichment sections. `funding_detail` / `mna_and_investment` are
-    enterprise-only: selectable, but auto-skipped for non-enterprise callers
-    (the backend 403s the whole request otherwise)."""
+    """Enrichment sections. `funding_detail` / `mna_and_investment` are not on
+    pay-as-you-go: selectable, but auto-skipped there (the backend 403s the
+    whole request otherwise). Subscription get a trimmed view,
+    enterprise the full data."""
 
     firmographic = "firmographic"
     business_model = "business_model"
@@ -38,12 +39,13 @@ class Section(str, Enum):
     mna_and_investment = "mna_and_investment"
 
 
-# Sections the akta.pro backend gates to Enterprise plans (mirrors the MCP tool).
-ENTERPRISE_SECTIONS = {"funding_detail", "mna_and_investment"}
+# Sections the akta.pro backend withholds from pay-as-you-go (mirrors the MCP
+# tool). Subscription gets a trimmed view of them, Enterprise the full data.
+PREMIUM_SECTIONS = {"funding_detail", "mna_and_investment"}
 
 # The per-section price list, shared verbatim with `list generate companies`
 # (which bills these per company) so both help screens can price a call.
-SECTION_CREDITS = """  business_model       2     industry             1
+SECTION_CREDITS = """  business_model       2     industry             0.5
   company_assessment   2     location             0.5
   company_hierarchy    0.5   management_profile   1
   customer_profile     1     mna_and_investment*  5
@@ -58,15 +60,17 @@ def _search_table(result: object) -> Table | None:
     if not rows:
         return None
     table = Table(title="Company search results")
-    for col in ("Name", "Website", "Category", "Status", "UUID"):
+    for col in ("Name", "Website", "Category", "Status", "UUID", "Parent"):
         table.add_column(col, overflow="fold")
     for row in rows:
+        parent = row.get("parent_company") or {}
         table.add_row(
             str(row.get("name", "")),
             str(row.get("website", "")),
             str(row.get("product_category", "")),
             str(row.get("company_status", "")),
             str(row.get("uuid", "")),
+            f"{parent.get('name', '')} ({parent.get('uuid', '')})" if parent else "",
         )
     return table
 
@@ -75,15 +79,26 @@ def _search_table(result: object) -> Table | None:
 def search(
     ctx: typer.Context,
     query: Annotated[str, typer.Argument(help="Company name or website, e.g. 'Canva' or 'canva.com'.")],
+    include_children: Annotated[
+        bool,
+        typer.Option("--include-children", help="Also match child companies (subsidiaries, divisions). Top-level companies only by default."),
+    ] = False,
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
     """Resolve a company by name or website to its akta.pro identifiers (free).
 
     Run this first — every other company command needs the `uuid` (or website)
-    returned here.
+    returned here. A child company's row names its parent company.
     """
-    result = fetch(ctx.obj, "/company/search", {"query": query})
+    params = {
+        "query": query,
+        # The API names this `include_children_companies` and defaults it to
+        # true, so the value is always sent — omitting it would include
+        # children even when the flag is off.
+        "include_children_companies": include_children,
+    }
+    result = fetch(ctx.obj, "/company/search", params)
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_search_table)
 
 
@@ -99,8 +114,9 @@ Sections and their credit cost — these names are the `-s/--section` values:
 
 {SECTION_CREDITS}
 
-* Enterprise-only: auto-skipped (not an error) for non-enterprise callers,
-with a note listing any dropped.
+* Subscription/Enterprise: Subscription get a trimmed view
+(first 3 rounds/investors/deals, month-year dates); Enterprise gets full data.
+Auto-skipped (not an error) on pay-as-you-go, with a note listing any dropped.
 
 Example — two sections, rendered as Markdown (4 credits):
 
@@ -138,15 +154,16 @@ def data(
         raise typer.Exit(code=EXIT_BAD_INPUT)
 
     requested = list(dict.fromkeys(s.value for s in sections))  # de-dupe, keep order
-    enterprise_req = [s for s in requested if s in ENTERPRISE_SECTIONS]
+    premium_req = [s for s in requested if s in PREMIUM_SECTIONS]
     skipped: list[str] = []
-    if enterprise_req and not probe_is_enterprise(ctx.obj):
-        requested = [s for s in requested if s not in ENTERPRISE_SECTIONS]
-        skipped = enterprise_req
+    if premium_req and not probe_has_premium_sections(ctx.obj):
+        requested = [s for s in requested if s not in PREMIUM_SECTIONS]
+        skipped = premium_req
     if not requested:
         err.print(
-            f"[yellow]Only enterprise-only section(s) requested ({', '.join(skipped)}); "
-            "your plan doesn't include them.[/] Pick non-enterprise sections or upgrade."
+            f"[yellow]Only section(s) your plan doesn't include were requested "
+            f"({', '.join(skipped)}).[/] Pick other sections, or upgrade to "
+            "Subscription, Agent or Enterprise."
         )
         raise typer.Exit(code=EXIT_BAD_INPUT)
 
@@ -158,7 +175,7 @@ def data(
         result = fetch(ctx.obj, "/company/enrichment", params)
         if skipped and not ctx.obj.quiet:
             err.print(
-                f"[yellow]Skipped enterprise-only section(s): {', '.join(skipped)} — "
+                f"[yellow]Skipped funding/M&A section(s): {', '.join(skipped)} — "
                 "not in your plan.[/]"
             )
         emit(ctx.obj, result, json_out=raw, output=output)
@@ -176,7 +193,7 @@ def data(
 
     if skipped:
         body = (
-            f"> _Skipped enterprise-only section(s): {', '.join(skipped)} — "
+            f"> _Skipped funding/M&A section(s): {', '.join(skipped)} — "
             "not in your plan._\n\n" + body
         )
 

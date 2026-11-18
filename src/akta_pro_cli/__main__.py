@@ -6,10 +6,16 @@ instead of an ImportError traceback.
 
 from __future__ import annotations
 
+import io
 import sys
 
 
 def main() -> None:
+    # On Windows, piped output (e.g. when an agent runs the CLI) is cp1252, which can't
+    # encode symbols like ✓/✗, so force both output and error streams to UTF-8.
+    if isinstance(sys.stdout, io.TextIOWrapper) and isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     try:
         from akta_pro_cli.app import app
     except ModuleNotFoundError as exc:  # e.g. a broken install missing typer/rich

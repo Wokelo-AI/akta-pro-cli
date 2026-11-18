@@ -11,7 +11,7 @@ from typing import Annotated
 
 import typer
 
-from akta_pro_cli.options import CompanyArg, JsonOpt, LimitOpt, OffsetOpt, OutOpt
+from akta_pro_cli.options import CompanyArg, JsonOpt, OffsetOpt, OutOpt
 from akta_pro_cli.runtime import emit, fetch
 
 reviews_app = typer.Typer(
@@ -33,7 +33,7 @@ def traffic(ctx: typer.Context, company: CompanyArg, json_out: JsonOpt = False, 
 def jobs(
     ctx: typer.Context,
     company: CompanyArg,
-    limit: LimitOpt = 10,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, help="Max job posts to return (max 100).")] = 10,
     offset: OffsetOpt = 0,
     json_out: JsonOpt = False,
     output: OutOpt = None,
@@ -46,7 +46,7 @@ def jobs(
 def posts(
     ctx: typer.Context,
     company: CompanyArg,
-    limit: LimitOpt = 10,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=50, help="Max posts to return (max 50).")] = 10,
     offset: OffsetOpt = 0,
     json_out: JsonOpt = False,
     output: OutOpt = None,

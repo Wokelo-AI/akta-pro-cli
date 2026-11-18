@@ -113,6 +113,41 @@ def test_search_sends_headers_and_query():
 
 
 @respx.mock
+def test_search_include_children_forwarded():
+    route = respx.get(f"{BASE}/company/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe",
+                              "--include-children", "--json"])
+    assert res.exit_code == 0
+    params = route.calls.last.request.url.params
+    assert params.get("include_children_companies") == "true"
+
+
+@respx.mock
+def test_search_sends_include_children_false_by_default():
+    """The API defaults this to true, so `false` has to be sent explicitly —
+    omitting it returned child companies even without the flag."""
+    route = respx.get(f"{BASE}/company/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": []}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe", "--json"])
+    assert res.exit_code == 0
+    assert route.calls.last.request.url.params.get("include_children_companies") == "false"
+
+
+@respx.mock
+def test_search_table_shows_parent_company():
+    respx.get(f"{BASE}/company/search").mock(
+        return_value=httpx.Response(200, json={"credits_consumed": 0, "data": [
+            {"name": "Stripe Capital", "uuid": "00000s2",
+             "parent_company": {"name": "Stripe", "uuid": "00000s1"}},
+        ]}))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "search", "Stripe Capital",
+                              "--include-children"])
+    assert res.exit_code == 0
+    assert "00000s1" in res.stdout
+
+
+@respx.mock
 def test_account():
     respx.get(f"{BASE}/mcp/account").mock(
         return_value=httpx.Response(200, json={"is_enterprise": False, "package_type": "top_up",
@@ -431,6 +466,19 @@ def test_enterprise_section_skipped_for_non_enterprise():
                               "-s", "firmographic", "-s", "mna_and_investment", "--markdown", "--raw"])
     assert res.exit_code == 0
     assert route.calls.last.request.url.params.get("sections") == "firmographic"
+
+
+@respx.mock
+def test_funding_section_kept_for_subscription():
+    # subscription (and agent) include funding/M&A even though is_enterprise is false
+    respx.get(f"{BASE}/mcp/account").mock(
+        return_value=httpx.Response(200, json={"is_enterprise": False, "package_type": "subscription"}))
+    route = respx.get(f"{BASE}/company/enrichment/markdown").mock(
+        return_value=httpx.Response(200, headers={"content-type": "text/markdown"}, text="# Canva"))
+    res = runner.invoke(app, ["--api-key", "wk_dummy", "company", "data", "canva.com",
+                              "-s", "firmographic", "-s", "mna_and_investment", "--markdown", "--raw"])
+    assert res.exit_code == 0
+    assert route.calls.last.request.url.params.get("sections") == "firmographic,mna_and_investment"
 
 
 # --- base URL override ---

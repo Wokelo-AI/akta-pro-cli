@@ -62,8 +62,26 @@ def resolve_api_key(ctx: AppContext) -> str:
     return key
 
 
-def probe_is_enterprise(ctx: AppContext) -> bool:
-    """Best-effort Enterprise-tier check via /mcp/account (free, 0 credits).
+def validate_key(base_url: str, key: str) -> tuple[bool, str]:
+    """Probe a free endpoint to check the key. Returns (ok, message)."""
+    client = AktaClient(base_url, key)
+    try:
+        client.get("/company/search", params={"query": "akta"})
+        return True, "key is valid"
+    except AktaAPIError as exc:
+        if exc.status_code in (401, 403):
+            return False, f"key rejected ({exc.status_code})"
+        return True, f"could not fully verify (error {exc.status_code}), key stored anyway"
+    except httpx.HTTPError as exc:
+        return True, f"could not reach akta.pro to verify ({exc})"
+    finally:
+        client.close()
+
+
+def probe_has_premium_sections(ctx: AppContext) -> bool:
+    """Whether this plan covers the funding/M&A sections, via /mcp/account
+    (free, 0 credits). True for Enterprise, and for the Subscription and Agent
+    tiers, which the backend also grants those sections to.
 
     Returns False on any failure (no key, network error, endpoint not deployed)
     so a probe never blocks or crashes the actual command.
@@ -74,7 +92,7 @@ def probe_is_enterprise(ctx: AppContext) -> bool:
     client = AktaClient(resolve_base_url(ctx), key, timeout=ctx.timeout)
     try:
         account = client.get("/mcp/account")
-        return bool(account.get("is_enterprise")) if isinstance(account, dict) else False
+        return (bool(account.get("is_enterprise")) or account.get("package_type") in ("subscription", "agent")) if isinstance(account, dict) else False
     except Exception:
         return False
     finally:

@@ -58,7 +58,7 @@ def _load_filters(raw: str) -> dict:
     "companies",
     help=f"""Generate a list of companies from --query, or from --filters and/or --free-text.
 
-Cost: 1.5/call (once any company matches) + 0.2/company + each --section's
+Cost: 0.1/call (once any company matches) + 0.01/company + each --section's
 `company data` cost, charged per company. --query additionally costs 2.5 for
 the NL-to-filters translation.
 
@@ -71,17 +71,18 @@ Just previewing a translation? Run `akta-pro list filter-builder` alone — same
 2.5 credits, without also paying for the company data. Then inspect/edit its
 filters and reuse them here via --filters for free.
 
-Example — 25 US companies, each with its industry (25 x 1.2 + 1.5 = 31.5 credits):
+Example — 25 US companies, each with its industry (25 x 1.01 + 0.1 = 25.35 credits):
 
   akta-pro list generate companies -n 25 -s industry --filters '{{"location.hq.country": "USA"}}'
 
 Example — the 50 biggest US cold-chain logistics companies with 100+ employees:
 
-  akta-pro list generate companies -n 50 --free-text "cold-chain logistics" --sort-by headcount --filters '{{"location.hq.country": "USA", "firmographic.headcount": {{"gte": 100}}}}'
+  akta-pro list generate companies -n 50 --free-text "cold-chain logistics" --sort-by headcount --filters '{{"location.hq.country": "USA", "firmographic.headcount_range": ["101-250", "251-500", "501-1000", "1001-5000", "5001-10000", "10001+"]}}'
 
 Filters take stored values, not display labels ("USA", not "United States") —
 `list filter-options <field>` returns the ones each field accepts. Numeric and
-date fields take a range instead: "firmographic.founded_year": {{"gte": 2015}}.""",
+date fields take a range instead: "firmographic.founded_year": {{"gte": 2015}}.
+Headcount is a band filter, so list every band a range touches.""",
 )
 def generate_companies(
     ctx: typer.Context,
@@ -91,7 +92,7 @@ def generate_companies(
     sections: Annotated[list[str] | None, typer.Option("-s", "--section", help="Enrichment section(s) to include per company (repeatable, same names as `company data`). Omit for identity fields only.")] = None,
     sort_by: Annotated[str | None, typer.Option("--sort-by", help="akta_rank (default), relevance (closeness to --free-text), headcount, revenue_estimate, total_funding, valuation_estimate, founded_year, or employee_range.")] = None,
     sort_order: Annotated[str | None, typer.Option("--sort-order", help="asc or desc (default desc).")] = None,
-    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, help="Max companies to return in this call: 100 (20 on pay-as-you-go). Page with --offset; offset+limit is capped at 1000 (50 on pay-as-you-go).")] = 20,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, help="Max companies to return in this call: 100 (50 on pay-as-you-go). Page with --offset; offset+limit is capped at 1000 (50 on pay-as-you-go).")] = 20,
     offset: Annotated[int, typer.Option("--offset", min=0, help="Pagination offset.")] = 0,
     skip_unavailable: Annotated[
         bool,

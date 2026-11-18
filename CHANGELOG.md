@@ -12,9 +12,10 @@ All notable changes to the akta.pro CLI are documented here. The format follows
 
 ### Changed
 - `--sort-by` documents `akta_rank` (the default), `headcount`, and `relevance`
-  (closeness to `--free-text`). The `firmographic.headcount` range filter is
-  shown in the help example.
-- `-n/--limit` is capped at 100 per call (was 500; 20 on pay-as-you-go); paging with
+  (closeness to `--free-text`). The help example filters size with the
+  `firmographic.headcount_range` band filter (e.g. `["101-250", "251-500"]`).
+- List generation cost is now 0.1/call + 0.01/company (was 1.5 + 0.2).
+- `-n/--limit` is capped at 100 per call (was 500; 50 on pay-as-you-go); paging with
   `--offset` reaches 1000 in total (50 on pay-as-you-go).
 
 ## [0.5.0]

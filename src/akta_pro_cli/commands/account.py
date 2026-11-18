@@ -25,8 +25,8 @@ def _account_table(result: object) -> Table | None:
 def account(ctx: typer.Context, json_out: JsonOpt = False, output: OutOpt = None) -> None:
     """Show your plan tier (is_enterprise, package_type) and credit balance (free).
 
-    Check this before Subscription/Enterprise-only commands (headcount, traffic,
-    jobs, posts, reviews) to know whether they'll be allowed.
+    Check this before commands that pay-as-you-go can't use (headcount,
+    traffic, jobs, posts, reviews) to know whether they'll be allowed.
     """
     result = fetch(ctx.obj, "/mcp/account")
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_account_table)

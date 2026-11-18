@@ -58,13 +58,14 @@ def _load_filters(raw: str) -> dict:
     "companies",
     help=f"""Generate a list of companies from --query, or from --filters and/or --free-text.
 
-Cost: 0.1/call (once any company matches) + 0.01/company + each --section's
+Cost: 0.1/call (charged even when nothing matches) + 0.01/company + each --section's
 `company data` cost, charged per company. --query additionally costs 2.5 for
 the NL-to-filters translation.
 
 Section credits, each multiplied by the number of companies returned.
 Sections on a list need a Subscription or Enterprise plan: pay-as-you-go and
-Agent get 403 for any -s (or every section skipped with --skip-unavailable).
+Agent get 403 for any -s (or every section skipped with --skip-unavailable) —
+enrich the companies you pick with `akta-pro company data` instead.
 `*` = funding/M&A: trimmed view on Subscription, full on Enterprise:
 
 {SECTION_CREDITS}
@@ -73,7 +74,7 @@ Just previewing a translation? Run `akta-pro list filter-builder` alone — same
 2.5 credits, without also paying for the company data. Then inspect/edit its
 filters and reuse them here via --filters for free.
 
-Example (Subscription/Enterprise) — 25 US companies, each with its industry (25 x 1.01 + 0.1 = 25.35 credits):
+Example (Subscription/Enterprise) — 25 US companies, each with its industry (25 x 0.51 + 0.1 = 12.85 credits):
 
   akta-pro list generate companies -n 25 -s industry --filters '{{"location.hq.country": "USA"}}'
 
@@ -94,7 +95,7 @@ def generate_companies(
     sections: Annotated[list[str] | None, typer.Option("-s", "--section", help="Enrichment section(s) to include per company (repeatable, same names as `company data`). Subscription/Enterprise only: pay-as-you-go and Agent get 403. Omit for identity fields only.")] = None,
     sort_by: Annotated[str | None, typer.Option("--sort-by", help="akta_rank (default), relevance (closeness to --free-text), headcount, revenue_estimate, total_funding, valuation_estimate, founded_year, or employee_range.")] = None,
     sort_order: Annotated[str | None, typer.Option("--sort-order", help="asc or desc (default desc).")] = None,
-    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=100, help="Max companies to return in this call: 100 (50 on pay-as-you-go). Page with --offset; offset+limit is capped at 1000 (50 on pay-as-you-go).")] = 20,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, help="Companies to return. One call can return the whole window: 1000 (50 on pay-as-you-go). A limit reaching past the window is trimmed to fit (the output's `limit` shows what came back). --offset must be below the window. Default 50.")] = 50,
     offset: Annotated[int, typer.Option("--offset", min=0, help="Pagination offset.")] = 0,
     skip_unavailable: Annotated[
         bool,

@@ -234,6 +234,10 @@ def concise(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Condensed company overview — slimmed JSON with the fluff redacted."""
+    """Condensed company overview — slimmed JSON with the fluff redacted. 3 credits.
+
+    Includes a short funding / M&A summary where your plan has access (not on
+    pay-as-you-go); use `company data` for round-by-round detail.
+    """
     result = fetch(ctx.obj, "/company/enrichment/concise", {"company": company})
     emit(ctx.obj, result, json_out=json_out, output=output)

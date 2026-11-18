@@ -1,6 +1,6 @@
 """Alternative-signal commands: headcount, traffic, jobs, posts, and reviews.
 
-All require Subscription/Enterprise access; Pay-as-you-go returns 403.
+All require Subscription, Agent or Enterprise access; Pay-as-you-go returns 403.
 `headcount`/`traffic`/`jobs`/`posts` register at the top level; employee and
 product reviews live under the `akta-pro reviews` group.
 """
@@ -16,17 +16,17 @@ from akta_pro_cli.runtime import emit, fetch
 
 reviews_app = typer.Typer(
     no_args_is_help=True,
-    help="Employee and product reviews (Subscription/Enterprise).",
+    help="Employee and product reviews (Subscription/Agent/Enterprise).",
 )
 
 
 def headcount(ctx: typer.Context, company: CompanyArg, json_out: JsonOpt = False, output: OutOpt = None) -> None:
-    """Headcount trends: total employees, historical growth, function breakdown. 2.5 credits (Subscription/Enterprise)."""
+    """Headcount trends: total employees, historical growth, function breakdown. 2.5 credits (Subscription/Agent/Enterprise)."""
     emit(ctx.obj, fetch(ctx.obj, "/company/headcount-trends", {"company": company}), json_out=json_out, output=output)
 
 
 def traffic(ctx: typer.Context, company: CompanyArg, json_out: JsonOpt = False, output: OutOpt = None) -> None:
-    """Website traffic: engagement, monthly visits, and channel breakdown. 1.5 credits (Subscription/Enterprise)."""
+    """Website traffic: engagement, monthly visits, and channel breakdown. 1.5 credits (Subscription/Agent/Enterprise)."""
     emit(ctx.obj, fetch(ctx.obj, "/company/website-traffic", {"company": company}), json_out=json_out, output=output)
 
 
@@ -38,7 +38,7 @@ def jobs(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Live job posts: title, location, comp, level, skills. 4 credits per 10 (Subscription/Enterprise)."""
+    """Live job posts: title, location, comp, level, skills. 4 credits per 10 (Subscription/Agent/Enterprise)."""
     params = {"company": company, "limit": limit, "offset": offset}
     emit(ctx.obj, fetch(ctx.obj, "/company/jobs", params), json_out=json_out, output=output)
 
@@ -51,7 +51,7 @@ def posts(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Company social posts: content, date, paid/repost flags, engagement. 1 credit per 10 (Subscription/Enterprise)."""
+    """Company social posts: content, date, paid/repost flags, engagement. 1 credit per 10 (Subscription/Agent/Enterprise)."""
     emit(ctx.obj, fetch(ctx.obj, "/company/posts", {"company": company, "limit": limit, "offset": offset}), json_out=json_out, output=output)
 
 

@@ -15,7 +15,8 @@ def _account_table(result: object) -> Table | None:
     table = Table(title="akta.pro account", show_header=False)
     table.add_column("Field", style="bold")
     table.add_column("Value")
-    for key in ("package_type", "is_enterprise", "credit_balance", "currency"):
+    # `currency` left out: it belongs to the money balance, and next to credits it reads as "$4829".
+    for key in ("package_type", "is_enterprise", "credit_balance"):
         if key in result:
             table.add_row(key.replace("_", " ").title(), str(result[key]))
     return table
@@ -24,8 +25,8 @@ def _account_table(result: object) -> Table | None:
 def account(ctx: typer.Context, json_out: JsonOpt = False, output: OutOpt = None) -> None:
     """Show your plan tier (is_enterprise, package_type) and credit balance (free).
 
-    Check this before Subscription/Enterprise-only commands (headcount, traffic,
-    jobs, posts, reviews) to know whether they'll be allowed.
+    Check this before commands that pay-as-you-go can't use (headcount,
+    traffic, jobs, posts, reviews) to know whether they'll be allowed.
     """
     result = fetch(ctx.obj, "/mcp/account")
     emit(ctx.obj, result, json_out=json_out, output=output, renderer=_account_table)

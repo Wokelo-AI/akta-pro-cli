@@ -3,6 +3,42 @@
 All notable changes to the akta.pro CLI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.8.0]
+
+### Added
+- `list generate companies --free-text "<keywords>"` finds companies by the kind
+  of business they do; sent as the `search.free_text` filter. Works alone or
+  with `--filters`.
+
+### Changed
+- `--sort-by` documents `akta_rank` (the default), `headcount`, and `relevance`
+  (closeness to `--free-text`). The help example filters size with the
+  `firmographic.headcount_range` band filter (e.g. `["101-250", "251-500"]`).
+- List generation cost is now 0.1/call + 0.01/company (was 1.5 + 0.2). The 0.1
+  is charged on every successful call, even when no company matches (it used
+  to be free).
+- Help now says `list generate companies -s` needs Subscription or Enterprise
+  (pay-as-you-go and Agent get 403), and that `--query` / `list filter-builder`
+  aren't on Agent plans.
+- Help and README now say headcount, traffic, jobs, posts and reviews work on
+  Subscription, Agent and Enterprise (pay-as-you-go gets 403).
+- `list generate companies -n` now defaults to 50 (was 20), matching the API.
+- `jobs -n` is capped at 100 and `posts -n` at 50, matching the API (larger
+  values used to fail server-side with 422).
+- `company data` names skipped funding/M&A sections as such (was
+  "enterprise-only"); Subscription and Agent include them too.
+- `list generate companies -s` on pay-as-you-go or Agent now fails with the
+  API's "Enrichment sections are not available in your current plan for list
+  generation, use company enrichment to enrich sections." The help points to
+  `akta-pro company data` for that.
+- On an Agent plan, an unknown company is now reported as just "Company not
+  found." (other plans still point to `akta-pro company add`).
+- `akta-pro account` no longer shows `currency`, which made the credit balance
+  read as money.
+- `-n/--limit` has no per-call cap: one call can return the whole window, 1000
+  companies (50 on pay-as-you-go). A limit reaching past the window is trimmed to
+  fit instead of failing; the output's `limit` shows what came back. `--offset` must be below the window.
+
 ## [0.7.0]
 
 ### Added

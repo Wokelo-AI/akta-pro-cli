@@ -34,7 +34,8 @@ class AktaAPIError(RuntimeError):
 _ERROR_MESSAGES = {
     400: "Bad request — check the parameters.",
     401: "Authentication failed. Check your API key (`akta-pro login`).",
-    403: "Access denied — your plan or credit balance does not cover this request.",
+    402: "Not enough credits — top up or upgrade to continue.",
+    403: "Access denied — your plan does not cover this request.",
     404: "Not found.",
     429: "Rate limit exceeded. Retry with backoff.",
     500: "akta.pro server error. Please try again later.",

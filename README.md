@@ -163,7 +163,7 @@ akta-pro disconnect codex            # remove the skill and the config entry
 | `akta-pro account` | free | your tier + credit balance |
 | `akta-pro company search <query>` | free | run first; returns `uuid`. `--include-children` also matches subsidiaries/divisions (rows name their parent) |
 | `akta-pro company data <company> -s ...` | per section | requires ≥1 `--section`; `--markdown` for a rendered report |
-| `akta-pro company concise <company>` | 8 | slimmed JSON |
+| `akta-pro company concise <company>` | 3 | slimmed JSON; a short funding/M&A summary where your plan has access |
 | `akta-pro company add <name> <website>` | free | submit a missing company; returns `request_id` (or `already_exists`) |
 | `akta-pro status <request_id>` | free | poll an async request, e.g. from `company add` |
 | `akta-pro industry search <query>` | free | codes feed `news signals --industry` / list filters; `--level l1..l4/all` (repeatable) |
@@ -171,15 +171,15 @@ akta-pro disconnect codex            # remove the skill and the config entry
 | `akta-pro news signals [filters]` | 0.1 + 0.01/article | anchor with `--company/--primary-company/--industry/--query/--title` (all optional); rich filters (`--country`, `--entity-*`, `--naics/--sic/--iptc/--iab`, `--blacklist`); `-n/--limit` max 100; compact list with `id`s |
 | `akta-pro news detail <id>...` | 0.1 + 0.01/article | full bodies for ids from `signals` (max 10) |
 | `akta-pro news types` | free | tag codes for `--type-code`; offline, no key |
-| `akta-pro list generate companies` | 1.5/call + 0.2/company + sections | `--query` (NL, +2.5 for translation) or `--filters` (JSON/@file), `-s/--section`, `--sort-by/--sort-order`, `-n/--limit`, `--offset` |
+| `akta-pro list generate companies` | 0.1/call (even if nothing matches) + 0.01/company + sections | `--query` (NL, +2.5 for translation; not on Agent), or `--filters` (JSON/@file) and/or `--free-text` (kind of business), `-s/--section` (Subscription/Enterprise only; otherwise use `company data` on the companies you pick), `--sort-by` (incl. `headcount`)/`--sort-order`, `-n/--limit` (up to the whole window in one call: 1000, 50 on pay-as-you-go; past it is trimmed to fit), `--offset` (below the window) |
 | `akta-pro list filters` | free | fields `--filters` accepts, and which have lookup-able values |
 | `akta-pro list filter-options <dropdown_type>` | free | allowed values for one filter field; `--query`, `-n/--limit`, `--level` |
-| `akta-pro list filter-builder <query>` | 2.5 | translate free text into structured `--filters` JSON for `list generate companies` |
-| `akta-pro headcount <company>` | 2.5 | Subscription/Enterprise |
-| `akta-pro traffic <company>` | 1.5 | Subscription/Enterprise |
-| `akta-pro jobs <company>` | 4/10 returned | Subscription/Enterprise |
-| `akta-pro posts <company>` | 1/10 returned | Subscription/Enterprise |
-| `akta-pro reviews employees <company>` | 1.5/50 | Subscription/Enterprise; `-n/--limit` max 100 |
+| `akta-pro list filter-builder <query>` | 2.5 | translate free text into structured `--filters` JSON for `list generate companies`; not on Agent |
+| `akta-pro headcount <company>` | 2.5 | Subscription/Agent/Enterprise |
+| `akta-pro traffic <company>` | 1.5 | Subscription/Agent/Enterprise |
+| `akta-pro jobs <company>` | 4/10 returned | Subscription/Agent/Enterprise; `-n/--limit` max 100 |
+| `akta-pro posts <company>` | 1/10 returned | Subscription/Agent/Enterprise; `-n/--limit` max 50 |
+| `akta-pro reviews employees <company>` | 1.5/50 | Subscription/Agent/Enterprise; `-n/--limit` max 100 |
 | `akta-pro reviews products <company>` | 1.5/50, or 0.5 to list the catalog | catalog first, then `--product-id`; `-n/--limit` max 50 per product |
 
 `company data` sections (each billed separately): `firmographic`,

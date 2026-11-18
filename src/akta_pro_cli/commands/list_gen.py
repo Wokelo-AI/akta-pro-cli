@@ -56,15 +56,17 @@ def _load_filters(raw: str) -> dict:
 
 @generate_app.command(
     "companies",
-    help=f"""Generate a list of companies from --query or --filters (exactly one required).
+    help=f"""Generate a list of companies from --query, or from --filters and/or --free-text.
 
-Cost: 1.5/call (once any company matches) + 0.2/company + each --section's
+Cost: 0.1/call (charged even when nothing matches) + 0.01/company + each --section's
 `company data` cost, charged per company. --query additionally costs 2.5 for
 the NL-to-filters translation.
 
-Section credits, each multiplied by the number of companies returned
-(`*` = funding/M&A: not on pay-as-you-go, trimmed view on Subscription, full on
-Enterprise; use --skip-unavailable if your plan lacks them):
+Section credits, each multiplied by the number of companies returned.
+Sections on a list need a Subscription or Enterprise plan: pay-as-you-go and
+Agent get 403 for any -s (or every section skipped with --skip-unavailable) —
+enrich the companies you pick with `akta-pro company data` instead.
+`*` = funding/M&A: trimmed view on Subscription, full on Enterprise:
 
 {SECTION_CREDITS}
 
@@ -72,22 +74,28 @@ Just previewing a translation? Run `akta-pro list filter-builder` alone — same
 2.5 credits, without also paying for the company data. Then inspect/edit its
 filters and reuse them here via --filters for free.
 
-Example — 25 US companies, each with its industry (25 x 1.2 + 1.5 = 31.5 credits):
+Example (Subscription/Enterprise) — 25 US companies, each with its industry (25 x 0.51 + 0.1 = 12.85 credits):
 
   akta-pro list generate companies -n 25 -s industry --filters '{{"location.hq.country": "USA"}}'
 
+Example — the 50 biggest US cold-chain logistics companies with 100+ employees:
+
+  akta-pro list generate companies -n 50 --free-text "cold-chain logistics" --sort-by headcount --filters '{{"location.hq.country": "USA", "firmographic.headcount_range": ["101-250", "251-500", "501-1000", "1001-5000", "5001-10000", "10001+"]}}'
+
 Filters take stored values, not display labels ("USA", not "United States") —
 `list filter-options <field>` returns the ones each field accepts. Numeric and
-date fields take a range instead: "firmographic.founded_year": {{"gte": 2015}}.""",
+date fields take a range instead: "firmographic.founded_year": {{"gte": 2015}}.
+Headcount is a band filter, so list every band a range touches.""",
 )
 def generate_companies(
     ctx: typer.Context,
-    query: Annotated[str | None, typer.Option("--query", help="Free-text description of the target companies, translated to filters server-side. Mutually exclusive with --filters.")] = None,
+    query: Annotated[str | None, typer.Option("--query", help="Free-text description of the target companies, translated to filters server-side (+2.5 credits; not on Agent plans). Mutually exclusive with --filters.")] = None,
     filters: Annotated[str | None, typer.Option("--filters", help="Structured filters as a JSON string or @file.json, keyed by enrichment field path — run `akta-pro list filters` (free) to see the field paths, or `akta-pro list filter-builder <query>` (2.5 credits) to have free text translated for you.")] = None,
-    sections: Annotated[list[str] | None, typer.Option("-s", "--section", help="Enrichment section(s) to include per company (repeatable, same names as `company data`). Omit for identity fields only.")] = None,
-    sort_by: Annotated[str | None, typer.Option("--sort-by", help="relevance (default), revenue_estimate, total_funding, valuation_estimate, founded_year, or employee_range.")] = None,
+    free_text: Annotated[str | None, typer.Option("--free-text", help="A few keywords naming the kind of business, e.g. 'cold-chain logistics' (max 500 chars). Matched against company descriptions; sent as the `search.free_text` filter. Works alone or with --filters; not with --query.")] = None,
+    sections: Annotated[list[str] | None, typer.Option("-s", "--section", help="Enrichment section(s) to include per company (repeatable, same names as `company data`). Subscription/Enterprise only: pay-as-you-go and Agent get 403. Omit for identity fields only.")] = None,
+    sort_by: Annotated[str | None, typer.Option("--sort-by", help="akta_rank (default), relevance (closeness to --free-text), headcount, revenue_estimate, total_funding, valuation_estimate, founded_year, or employee_range.")] = None,
     sort_order: Annotated[str | None, typer.Option("--sort-order", help="asc or desc (default desc).")] = None,
-    limit: Annotated[int, typer.Option("-n", "--limit", min=1, max=500, help="Max companies to return. offset+limit is capped at 500 (20 on pay-as-you-go).")] = 20,
+    limit: Annotated[int, typer.Option("-n", "--limit", min=1, help="Companies to return. One call can return the whole window: 1000 (50 on pay-as-you-go). A limit reaching past the window is trimmed to fit (the output's `limit` shows what came back). --offset must be below the window. Default 50.")] = 50,
     offset: Annotated[int, typer.Option("--offset", min=0, help="Pagination offset.")] = 0,
     skip_unavailable: Annotated[
         bool,
@@ -101,12 +109,15 @@ def generate_companies(
 ) -> None:
     """Generate a list of companies. User-facing help lives in the decorator's
     `help=` so it can interpolate SECTION_CREDITS."""
-    if bool(query) == bool(filters):
-        err.print("[red]Pass exactly one of --query or --filters.[/]")
+    if bool(query) == bool(filters or free_text):
+        err.print("[red]Pass --query, or --filters and/or --free-text.[/]")
         raise typer.Exit(code=EXIT_BAD_INPUT)
+    parsed = _load_filters(filters) if filters else None
+    if free_text:
+        parsed = {**(parsed or {}), "search.free_text": free_text}
     body = {
         "query": query,
-        "filters": _load_filters(filters) if filters else None,
+        "filters": parsed,
         "sections": sections,
         "sort_by": sort_by,
         "sort_order": sort_order,
@@ -166,7 +177,7 @@ def filter_builder(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Translate a free-text query into structured filters. 2.5 credits.
+    """Translate a free-text query into structured filters. 2.5 credits (not on Agent plans).
 
     Inspect or edit the returned `filters`, then pass them to
     `akta-pro list generate companies --filters '<json>'` to skip the translation fee.

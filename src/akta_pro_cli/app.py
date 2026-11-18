@@ -86,7 +86,7 @@ def main(
 
 PANEL_SETUP = "Setup & account"
 PANEL_DATA = "Company & news data"
-PANEL_ALT = "Alternative signals (Subscription/Enterprise)"
+PANEL_ALT = "Alternative signals (Subscription/Agent/Enterprise)"
 PANEL_LISTS = "List generation"
 
 auth.register(app, PANEL_SETUP)     # login, logout, whoami

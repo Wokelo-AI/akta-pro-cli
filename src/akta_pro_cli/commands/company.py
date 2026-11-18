@@ -163,7 +163,7 @@ def data(
         err.print(
             f"[yellow]Only section(s) your plan doesn't include were requested "
             f"({', '.join(skipped)}).[/] Pick other sections, or upgrade to "
-            "Subscription or Enterprise."
+            "Subscription, Agent or Enterprise."
         )
         raise typer.Exit(code=EXIT_BAD_INPUT)
 
@@ -175,7 +175,7 @@ def data(
         result = fetch(ctx.obj, "/company/enrichment", params)
         if skipped and not ctx.obj.quiet:
             err.print(
-                f"[yellow]Skipped enterprise-only section(s): {', '.join(skipped)} — "
+                f"[yellow]Skipped funding/M&A section(s): {', '.join(skipped)} — "
                 "not in your plan.[/]"
             )
         emit(ctx.obj, result, json_out=raw, output=output)
@@ -193,7 +193,7 @@ def data(
 
     if skipped:
         body = (
-            f"> _Skipped enterprise-only section(s): {', '.join(skipped)} — "
+            f"> _Skipped funding/M&A section(s): {', '.join(skipped)} — "
             "not in your plan._\n\n" + body
         )
 
@@ -234,6 +234,10 @@ def concise(
     json_out: JsonOpt = False,
     output: OutOpt = None,
 ) -> None:
-    """Condensed company overview — slimmed JSON with the fluff redacted."""
+    """Condensed company overview — slimmed JSON with the fluff redacted. 3 credits.
+
+    Includes a short funding / M&A summary where your plan has access (not on
+    pay-as-you-go); use `company data` for round-by-round detail.
+    """
     result = fetch(ctx.obj, "/company/enrichment/concise", {"company": company})
     emit(ctx.obj, result, json_out=json_out, output=output)
